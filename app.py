@@ -18,6 +18,7 @@ import feedgenerator
 from apscheduler.schedulers.background import BackgroundScheduler
 from get_latest_release import get_latest_release
 from datetime import datetime as dt
+from prometheus_flask_exporter import PrometheusMetrics
 import time
 import os
 import logging
@@ -27,6 +28,12 @@ import config
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+
+# Set up metrics
+metrics = PrometheusMetrics(app)
+
+# Expose some default metrics
+metrics.info('app_info', 'Application info', version='1.0.3')
 
 
 class SimpleCache:
