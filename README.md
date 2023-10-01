@@ -7,6 +7,7 @@ This is a simple Flask-based RSS server that provides information about the late
 - Automatically updates release information every 24 hours.
 - Caches release data to minimize external requests.
 - Supports multiple Mirantis products.
+- Exposes basic Prometheus metrics to monitor application performance.
 
 ## Table of Contents
 
