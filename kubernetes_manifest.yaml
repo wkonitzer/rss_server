@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rss-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rss-server-deployment
+  namespace: rss-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rss-server
+  template:
+    metadata:
+      labels:
+        app: rss-server
+    spec:
+      containers:
+      - name: rss-server
+        image: msr2.konitzer.dev/wkonitzer/rss_server:latest
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rss-server-service
+  namespace: rss-server
+spec:
+  selector:
+    app: rss-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rss-server-ingress
+  namespace: rss-server
+  annotations:
+    kubernetes.io/ingress.class: caddy
+    caddy.ingress.kubernetes.io/rewrite-to: /rss # Map / to /rss
+spec:
+  rules:
+  - host: rss-server.konitzer.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rss-server-service
+            port:
+              number: 80
