@@ -23,6 +23,8 @@ spec:
         image: msr2.konitzer.dev/wkonitzer/rss_server:latest
         ports:
         - containerPort: 5000
+      imagePullSecrets:
+      - name: my-registry-secret
 ---
 apiVersion: v1
 kind: Service
