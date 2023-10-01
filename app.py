@@ -21,6 +21,7 @@ from datetime import datetime as dt
 import time
 import os
 import logging
+import config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -51,16 +52,9 @@ class SimpleCache:
         self.cache[key] = (time.time(), value)
 
 
-release_cache = SimpleCache(timeout=86400)  # 24-hour timeout
+release_cache = SimpleCache(timeout=config.CACHE_TIMEOUT)
 
-products = [
-    {'product': 'mcr', 'repository': 'https://repos.mirantis.com',
-        'channel': 'stable', 'component': 'docker'},
-    {'product': 'mke', 'repository': 'mirantis/ucp',
-        'registry': 'https://hub.docker.com'},
-    {'product': 'msr', 'repository': 'msr/msr',
-        'registry': 'https://registry.mirantis.com', 'branch': '3.1'},
-]
+products = config.PRODUCTS
 
 
 def update_cache():
@@ -101,7 +95,7 @@ def rss_feed():
     logging.info('Generating RSS feed...')
     feed = feedgenerator.Rss201rev2Feed(
         title="Mirantis Software Releases",
-        link="https://mirantis.com",
+        link="http://localhost:5000/",
         description="Latest Mirantis software releases",
         language="en",
     )
@@ -174,12 +168,15 @@ def rss_feed():
 # Initialize the cache and the scheduler
 update_cache()
 scheduler = BackgroundScheduler()
-scheduler.add_job(update_cache, 'interval', hours=12)
-logging.info('Scheduler started with job to update cache every 12 hours.')
+scheduler.add_job(update_cache, 'interval', hours=config.SCHEDULER_INTERVAL)
+logging.info(
+    'Scheduler started with job to update cache every '
+    f'{config.SCHEDULER_INTERVAL} hours.'
+)
 scheduler.start()
 
 if __name__ == '__main__':
     logging.info('Starting application...')
     is_debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    app.run(host="0.0.0.0", port=4000, debug=is_debug_mode)
+    app.run(host=config.HOST, port=config.PORT, debug=is_debug_mode)
     logging.info('Application stopped.')
