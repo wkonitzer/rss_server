@@ -110,7 +110,7 @@ def update_cache():
         Note:
         This function is intended to be used as a worker function with
         concurrent.futures.ThreadPoolExecutor for parallel execution.
-        """        
+        """
         # Determine the available keys in the product dictionary
         available_keys = [key for key in ['product', 'repository',
                                           'channel', 'component', 'registry',
@@ -194,7 +194,7 @@ def rss_feed():
         Note:
         This function is intended to be used as a worker function with
         concurrent.futures.ThreadPoolExecutor for parallel execution.
-        """        
+        """
         # Determine the available keys in the product dictionary
         available_keys = [key for key in ['product', 'repository',
                                           'channel', 'component', 'registry',
