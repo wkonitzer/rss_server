@@ -99,7 +99,7 @@ def mock_datetime_now_fixture():
         yield mock_now
 
 
-def test_rss_feed(test_client, mock_get_release, mock_cache):
+def test_rss_feed(test_client):
     """
     Test the /rss route of the app.
     
