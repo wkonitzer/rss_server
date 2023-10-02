@@ -13,15 +13,17 @@ To run:
     python app.py
 """
 
-from flask import Flask, Response
-import feedgenerator
-from apscheduler.schedulers.background import BackgroundScheduler
-from get_latest_release import get_latest_release
-from datetime import datetime as dt
-from prometheus_flask_exporter import PrometheusMetrics
-import time
 import os
+import time
 import logging
+from datetime import datetime as dt
+
+from flask import Flask, Response
+from prometheus_flask_exporter import PrometheusMetrics
+from apscheduler.schedulers.background import BackgroundScheduler
+import feedgenerator
+
+from get_latest_release import get_latest_release
 import config
 
 # Configure logging
@@ -48,6 +50,16 @@ class SimpleCache:
         self.timeout = timeout
 
     def get(self, key):
+        """
+        Retrieves the value from the cache associated with the given key.
+        
+        Parameters:
+        key (str): The key for which the value needs to be retrieved.
+        
+        Returns:
+        value (Any): The value associated with the given key if the key exists
+        in the cache and the value is not timed out, else None.
+        """        
         data = self.cache.get(key)
         if data:
             timestamp, value = data
@@ -56,6 +68,13 @@ class SimpleCache:
         return None
 
     def set(self, key, value):
+        """
+        Stores the key-value pair in the cache with the current timestamp.
+        
+        Parameters:
+        key (str): The key for which the value needs to be stored.
+        value (Any): The value that needs to be stored for the given key.
+        """        
         self.cache[key] = (time.time(), value)
 
 
@@ -84,7 +103,7 @@ def update_cache():
         # Fetch the latest release info and update the cache
         release_info = get_latest_release(**product)
         release_cache.set(key, release_info)
-        logging.info(f'Cache updated for product: {product["product"]}')
+        logging.info('Cache updated for product: %s', product["product"])
     logging.info('Cache update complete.')
 
 
@@ -186,8 +205,8 @@ update_cache()
 scheduler = BackgroundScheduler()
 scheduler.add_job(update_cache, 'interval', hours=config.SCHEDULER_INTERVAL)
 logging.info(
-    'Scheduler started with job to update cache every '
-    f'{config.SCHEDULER_INTERVAL} hours.'
+    'Scheduler started with job to update cache every %s hours.',
+    config.SCHEDULER_INTERVAL
 )
 scheduler.start()
 

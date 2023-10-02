@@ -15,13 +15,14 @@ Dependencies:
     - logging
 """
 
-import requests
 import re
+import logging
+from datetime import datetime
+
+import requests
 import yaml
 from bs4 import BeautifulSoup
-from datetime import datetime
 from packaging.version import Version
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -66,10 +67,8 @@ def get_latest_release(product='mcr',
         url = f"{repository}/win/static/{channel}/x86_64/"
         response = requests.get(url)
         if response.status_code != 200:
-            logger.error(
-                f'Failed to fetch data from {url}. '
-                f'Status code: {response.status_code}'
-            )
+            logger.error('Failed to fetch data from %s. Status code: %s',
+                         url, response.status_code)
             return "Unexpected response", None
 
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -184,14 +183,12 @@ def get_latest_release(product='mcr',
         latest_release = releases[0]
 
         date_object = latest_release.get('date')
-        logger.info(
-            f'Latest release for {product}: Version - '
-            f'{latest_release["name"]}, Date - {date_object}'
-        )
+        logger.info('Latest release for %s: Version - %s, Date - %s',
+                    product, latest_release["name"], date_object)
         return latest_release['name'], date_object
-    else:
-        logger.warning(f'No matching GA releases found for product: {product}')
-        return "No matching GA releases found.", None
+
+    logger.warning('No matching GA releases found for product: %s', product)
+    return "No matching GA releases found.", None
 
 
 if __name__ == "__main__":
