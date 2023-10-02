@@ -50,7 +50,7 @@ def fetch_mcr(product_config):
         config.logger.error('HTTP request failed: %s', e)
         return []
     except Exception as e:
-        config.logger.error(f"An unexpected error occurred: {e}")
+        config.logger.error("An unexpected error occurred: %s", e)
         return []           
 
 
@@ -92,12 +92,11 @@ def fetch_mke(product_config):
         return releases
 
     except (requests.RequestException, requests.HTTPError) as e:
-        config.logger.error(f"Error fetching {url}: {e}")
+        config.logger.error("Error fetching %s: %s", url, e)
         return []
     except Exception as e:
-        config.logger.error(f"An unexpected error occurred: {e}")
+        config.logger.error("An unexpected error occurred: %s", e)
         return []
-
 
 def fetch_msr(product_config):
     config = importlib.import_module('config')
@@ -141,11 +140,16 @@ def fetch_msr(product_config):
                             releases.append({'name': app_version,
                                             'date': date_object})
                         except ValueError:
-                            config.logger.error(f"Error parsing date string: {date_str}")
+                            config.logger.error(
+                                "Error parsing date string: %s", 
+                                date_str
+                            )
                     else:
-                        config.logger.warning(f"No date found for version {app_version}")
-        except (requests.RequestException, requests.HTTPError, yaml.YAMLError) as e:
-            config.logger.error(f"Error fetching {url}: {e}")
+                        config.logger.warning(
+                            "No date found for version %s", app_version)
+        except (requests.RequestException,
+                requests.HTTPError, yaml.YAMLError) as e:
+            config.logger.error("Error fetching %s: %s", url, e)
     else:
         url = f"{registry}/v2/repositories/{repository}/tags"
         config.logger.debug('Constructed URL: %s', url)
@@ -171,7 +175,10 @@ def fetch_msr(product_config):
                                                     '%Y-%m-%dT%H:%M:%S.%fZ')
                     releases.append({'name': tag_name, 'date': date_object})
         except (requests.RequestException, requests.HTTPError) as e:
-            config.logger.error(f"Error fetching {url}: {e}")
+            config.logger.error("Error fetching %s: %s", url, e)
+        except Exception as e:
+            config.logger.error("An unexpected error occurred: %s", e)
+            return []            
     
     config.logger.debug('Parsed releases before filtering: %s', releases)
     
