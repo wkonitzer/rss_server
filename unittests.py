@@ -22,7 +22,7 @@ def client():
     
     Yields:
         FlaskClient: An instance of the app's test client.
-    """    
+    """
     with app.test_client() as client:
         yield client
 
@@ -34,7 +34,7 @@ def mock_get_latest_release():
     
     Yields:
         MagicMock: A mock object simulating the get_latest_release function.
-    """    
+    """
     with patch('app.get_latest_release') as mock:
         # Example mock data
         mock.return_value = ('1.0.0', '2023-10-01T12:00:00Z')
@@ -48,7 +48,7 @@ def mock_release_cache():
     
     Yields:
         MagicMock: A mock object simulating the release_cache object.
-    """    
+    """
     with patch('app.release_cache', MagicMock()) as mock:
         yield mock
 
@@ -60,10 +60,37 @@ def mock_datetime_now():
     
     Yields:
         Mock: A mock object simulating the now method of the datetime module.
-    """    
+    """
     class MockDateTime(datetime):
+        """
+        A subclass of datetime, used to override the now() method for testing purposes.
+        
+        This class is intended to be used within testing environments where control over
+        the current date and time returned by datetime.now() is required. It allows tests
+        to simulate different points in time and observe how the code under test behaves.
+        
+        Methods:
+        --------
+        now(cls) -> datetime:
+            Overrides the datetime.now() method to return a mock datetime object.
+            The actual datetime returned is controlled by the mock_now function.
+            
+        Example:
+        --------
+        >>> with patch('datetime.datetime', new=MockDateTime):
+        ...     assert datetime.now() == mock_now()  # mock_now() returns the mock datetime object.
+        """
         @classmethod
         def now(cls):
+            """
+            Override the now method to return a mock datetime.
+            
+            Returns:
+            --------
+            datetime:
+                A datetime object representing the current date and time,
+                as determined by the mock_now function.
+            """
             return mock_now()
 
     mock_now = Mock(return_value=datetime(2023, 10, 1, 0, 0, 0))
@@ -112,7 +139,8 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
             'repository': 'https://repos.mirantis.com',
             'channel': 'stable',
             'component': 'docker',
-            'fetch_function': ANY  # use ANY since the actual function reference may not be easily available
+            'fetch_function': ANY  # use ANY since the actual function 
+                                   # reference may not be easily available
         }),
         call({
             'product': 'mke',
@@ -150,7 +178,7 @@ def test_scheduled_update(mock_release_cache, mock_datetime_now):
     Args:
         mock_release_cache (MagicMock): Mock of the release_cache object.
         mock_datetime_now (Mock): Mock of the datetime module's now method.
-    """    
+    """
     # Set the initial datetime
     initial_datetime = datetime(2023, 10, 1, 0, 0, 0)
     mock_datetime_now.now.return_value = initial_datetime
