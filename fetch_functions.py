@@ -11,7 +11,7 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
-def construct_url(repository, channel, component):
+def construct_url(repository, channel):
     """
     Constructs and returns the URL to be used for fetching release information
     for MCR based on the provided repository, channel, and component.
@@ -95,7 +95,7 @@ def fetch_mcr(product_config):
         This function is part of a module that contains functions to fetch the
         latest release information for specified products from different types
         of repositories and registries.
-    """    
+    """
     config = importlib.import_module('config')
     config.logger.debug('fetch_mcr called with configuration: %s',
                         product_config)
@@ -104,7 +104,7 @@ def fetch_mcr(product_config):
     channel = product_config.get('channel')
     component = product_config.get('component')
 
-    url = construct_url(repository, channel, component)
+    url = construct_url(repository, channel)
     config.logger.debug('Constructed URL: %s', url)
 
     try:

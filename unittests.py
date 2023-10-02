@@ -15,8 +15,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture
-def client():
+@pytest.fixture(name='test_client')
+def client_fixture():
     """
     Create a test client for the Flask app.
     
@@ -27,8 +27,8 @@ def client():
         yield client
 
 
-@pytest.fixture
-def mock_get_latest_release():
+@pytest.fixture(name='mock_get_release')
+def mock_get_latest_release_fixture():
     """
     Mock the get_latest_release function, simulating its behavior for testing.
     
@@ -41,8 +41,8 @@ def mock_get_latest_release():
         yield mock
 
 
-@pytest.fixture
-def mock_release_cache():
+@pytest.fixture(name='mock_cache')
+def mock_release_cache_fixture():
     """
     Mock the release_cache object, simulating its behavior for testing.
     
@@ -53,8 +53,8 @@ def mock_release_cache():
         yield mock
 
 
-@pytest.fixture
-def mock_datetime_now():
+@pytest.fixture(name='mock_dt_now')
+def mock_datetime_now_fixture():
     """
     Mock the datetime module's now method, controlling the returned current time.
     
@@ -81,7 +81,7 @@ def mock_datetime_now():
         ...     assert datetime.now() == mock_now()  # mock_now() returns the mock datetime object.
         """
         @classmethod
-        def now(cls):
+        def now(cls, tz=None):
             """
             Override the now method to return a mock datetime.
             
@@ -99,7 +99,7 @@ def mock_datetime_now():
         yield mock_now
 
 
-def test_rss_feed(client, mock_get_latest_release, mock_release_cache):
+def test_rss_feed(test_client, mock_get_release, mock_cache):
     """
     Test the /rss route of the app.
     
@@ -108,13 +108,13 @@ def test_rss_feed(client, mock_get_latest_release, mock_release_cache):
         mock_get_latest_release (MagicMock): Mock of the get_latest_release function.
         mock_release_cache (MagicMock): Mock of the release_cache object.
     """
-    response = client.get('/rss')
+    response = test_client.get('/rss')
 
     # Assert that the response status code is 200 (OK)
     assert response.status_code == 200
 
 
-def test_update_cache(mock_get_latest_release, mock_release_cache):
+def test_update_cache(mock_get_release, mock_cache):
     """
     Test the update_cache function of the app.
     
@@ -126,10 +126,10 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
 
     # Log interactions with mocks
     logger.debug('Mock get_latest_release called with: %s',
-                 mock_get_latest_release.call_args_list)
+                 mock_get_release.call_args_list)
 
     logger.debug('Mock release_cache.set called with: %s',
-                 mock_release_cache.set.call_args_list)
+                 mock_cache.set.call_args_list)
 
     # Assert that the get_latest_release was called with the expected arguments
     # for each product
@@ -156,7 +156,7 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
             'fetch_function': ANY
         }),
     ]
-    mock_get_latest_release.assert_has_calls(
+    mock_get_release.assert_has_calls(
         calls_get_latest_release, any_order=True)
 
     # Assert that the cache was updated with the expected data using set method
@@ -168,10 +168,10 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
         call('msr_msr/msr_https://registry.mirantis.com_3.1',
              ('1.0.0', '2023-10-01T12:00:00Z'))
     ]
-    mock_release_cache.set.assert_has_calls(calls_set, any_order=True)
+    mock_cache.set.assert_has_calls(calls_set, any_order=True)
 
 
-def test_scheduled_update(mock_release_cache, mock_datetime_now):
+def test_scheduled_update(mock_cache, mock_dt_now):
     """
     Test the scheduled update of the cache and RSS feed.
     
@@ -181,7 +181,7 @@ def test_scheduled_update(mock_release_cache, mock_datetime_now):
     """
     # Set the initial datetime
     initial_datetime = datetime(2023, 10, 1, 0, 0, 0)
-    mock_datetime_now.now.return_value = initial_datetime
+    mock_dt_now.return_value = initial_datetime
 
     # Mock the get_latest_release function to return a new version
     with patch('app.get_latest_release') as mock_get_latest_release:
@@ -194,7 +194,7 @@ def test_scheduled_update(mock_release_cache, mock_datetime_now):
 
         # Before calling rss_feed, ensure that the release_info in the cache
         # has a real datetime object for pubdate
-        with patch.object(mock_release_cache, 'get',
+        with patch.object(mock_cache, 'get',
                           return_value=('1.1.0', initial_datetime)):
             rss_feed()  # Trigger RSS feed generation
 
@@ -209,7 +209,7 @@ def test_scheduled_update(mock_release_cache, mock_datetime_now):
     ]
 
     # Assert that the cache was updated with the new version for each product
-    mock_release_cache.set.assert_has_calls(expected_calls, any_order=True)
+    mock_cache.set.assert_has_calls(expected_calls, any_order=True)
 
 
 if __name__ == '__main__':
