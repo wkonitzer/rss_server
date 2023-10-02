@@ -217,12 +217,12 @@ def fetch_msr(product_config):
         config.logger.debug('HTTP response status: %s', response.status_code)
         config.logger.debug('HTTP response text: %s', response.text)
 
-        data = (yaml.safe_load(response.text) 
-                if branch_major and branch_major >= 3 
+        data = (yaml.safe_load(response.text)
+                if branch_major and branch_major >= 3
                 else response.json())
         return parse_msr_releases(data, branch)
-    except (requests.RequestException, 
-            requests.HTTPError, 
+    except (requests.RequestException,
+            requests.HTTPError,
             yaml.YAMLError) as request_error:
         config.logger.error("Error fetching %s: %s", url, request_error)
         return []
@@ -260,7 +260,7 @@ def parse_msr_releases(data, branch):
         If the 'created' key is missing or empty, a warning is logged.
         If a branch is specified, releases not belonging to this branch are
         discarded.
-    """    
+    """
     config = importlib.import_module('config')
     releases = []
     for entry in data.get('entries', {}).get('msr', []):
@@ -282,8 +282,8 @@ def parse_msr_releases(data, branch):
     if branch:
         major, minor = map(int, branch.split('.'))
         releases = [
-            release for release in releases 
-            if release['name'].split('.')[0] == str(major) 
+            release for release in releases
+            if release['name'].split('.')[0] == str(major)
             and release['name'].split('.')[1] == str(minor)
         ]
     return releases

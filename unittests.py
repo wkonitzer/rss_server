@@ -107,7 +107,7 @@ def test_rss_feed(client, mock_get_latest_release, mock_release_cache):
         client (FlaskClient): An instance of the app's test client.
         mock_get_latest_release (MagicMock): Mock of the get_latest_release function.
         mock_release_cache (MagicMock): Mock of the release_cache object.
-    """    
+    """
     response = client.get('/rss')
 
     # Assert that the response status code is 200 (OK)
