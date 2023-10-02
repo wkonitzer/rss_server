@@ -144,72 +144,86 @@ def fetch_mke(product_config):
         return []
 
 def fetch_msr(product_config):
-    """
-    Fetches and parses the latest release information for a specified MSR
-    product from Mirantis registry or a Helm chart repository, based on the
-    provided configuration.
-    
-    The function constructs the request URL from the configuration, sends an
-    HTTP GET request to retrieve the release information, and then parses the
-    response to extract the relevant details. It returns a list containing
-    dictionaries with the name and date of each release found.
-    
-    Parameters:
-        product_config (dict): A configuration dictionary specifying the
-            details about the product whose release information is to be
-            fetched. It should contain keys such as 'repository', 'registry',
-            and 'branch'.
-            Example:
-                {
-                    'repository': 'msr/msr',
-                    'registry': 'https://registry.mirantis.com',  # optional, 
-                                                         specifies registry URL
-                    'branch': '3.1'  # specifies the branch of the product
-                }
-    
-    Returns:
-        list: A list of dictionaries, each representing a release with its
-            name and date.
-            Example:
-                [
-                    {'name': '3.4.5', 'date': datetime.datetime(2023, 10, 1,
-                     12, 0, 0)}
-                ]
-            Returns an empty list if no releases are found or an error occurs 
-            during the fetch operation.
-    
-    Raises:
-        ValueError: If required keys in the product_config are missing.
-        requests.RequestException: If there are issues related to the HTTP 
-        request, e.g. connectivity problems, timeout, etc.
-        yaml.YAMLError: If there is an error in parsing the YAML response from 
-        the Helm chart repository.
-    
-    Notes:
-        The function handles fetching from different sources (registry or Helm
-        chart repository) based on the branch version specified in the
-        product_config. It filters the fetched releases based on the specified
-        branch and logs errors and warnings for various failure scenarios.
-    """
+"""
+This code block fetches release information for a specified MSR product from
+either the Mirantis registry or a Helm chart repository, based on the provided
+configuration. It constructs the appropriate URL, sends an HTTP GET request,
+and processes the response to extract release details. 
+
+Configuration settings are imported, and the logger from the config module is
+utilized to log process details and any potential errors. The URL is
+constructed dynamically based on the product configuration and the major
+version of the specified branch.
+
+The code sends an HTTP GET request to the constructed URL and logs the HTTP
+response status and text. If the branch_major is 3 or above, the response text
+is interpreted as YAML; otherwise, it's interpreted as JSON. The parsed data,
+along with the branch information, is then passed to the 'parse_msr_releases'
+function to extract the release details.
+
+In case of errors during the HTTP request, such as connectivity problems,
+timeout, or unsuccessful HTTP status, appropriate exceptions are caught, and
+error messages are logged. If an error occurs during the response text parsing
+as YAML or JSON, a ValueError is caught and logged.
+
+Parameters:
+    product_config (dict): Contains product configuration details like
+        'repository', 'registry', and 'branch'.
+        Example:
+            {
+                'repository': 'msr/msr',
+                'registry': 'https://registry.mirantis.com',
+                'branch': '3.1'
+            }
+
+Returns:
+    list: Returns a list of dictionaries, each containing the 'name' and 'date'
+    of a release, returned by the 'parse_msr_releases' function. Returns an
+    empty list if any error occurs during the process.
+
+Raises:
+    requests.RequestException: For issues related to the HTTP request, such as
+    connectivity problems or timeout.
+    requests.HTTPError: If the HTTP request receives an unsuccessful status
+    code.
+    yaml.YAMLError: If there is an error in parsing the YAML response from the
+    Helm chart repository.
+    ValueError: For errors in interpreting the response text as YAML or JSON,
+    or in parsing the date string in 'parse_msr_releases'.
+"""
     config = importlib.import_module('config')
-    config.logger.debug('fetch_msr called with configuration: %s', product_config)
+    config.logger.debug('fetch_msr called with configuration: %s',
+                        product_config)
     repository = product_config.get('repository')
     registry = product_config.get('registry')
     branch = product_config.get('branch')
     branch_major = int(branch.split('.')[0]) if branch else None
-    
-    url = f"{registry}/charts/{repository}/index.yaml" if branch_major and branch_major >= 3 else f"{registry}/v2/repositories/{repository}/tags"
+
+    base_url = (
+        f"{registry}/charts/{repository}"
+        if branch_major and branch_major >= 3
+        else f"{registry}/v2/repositories/{repository}"
+    )
+    url = (
+        f"{base_url}/index.yaml"
+        if branch_major and branch_major >= 3
+        else f"{base_url}/tags"
+    )
     config.logger.debug('Constructed URL: %s', url)
-    
+
     try:
         response = requests.get(url, timeout=5)
         response.raise_for_status()
         config.logger.debug('HTTP response status: %s', response.status_code)
         config.logger.debug('HTTP response text: %s', response.text)
-        
-        data = yaml.safe_load(response.text) if branch_major and branch_major >= 3 else response.json()
+
+        data = (yaml.safe_load(response.text) 
+                if branch_major and branch_major >= 3 
+                else response.json())
         return parse_msr_releases(data, branch)
-    except (requests.RequestException, requests.HTTPError, yaml.YAMLError) as request_error:
+    except (requests.RequestException, 
+            requests.HTTPError, 
+            yaml.YAMLError) as request_error:
         config.logger.error("Error fetching %s: %s", url, request_error)
         return []
     except ValueError as value_error:
@@ -217,6 +231,37 @@ def fetch_msr(product_config):
         return []
 
 def parse_msr_releases(data, branch):
+    """
+    Parses the release information from the provided data and returns a list
+    of dictionaries, each representing a release with its name and date.
+
+    This function iterates over the data, extracting the app version and 
+    creation date of each release, then filters the releases based on the 
+    provided branch and returns a list of the remaining releases.
+
+    Parameters:
+        data (dict): A dictionary containing the release data to be parsed.
+        branch (str): The branch of the product to filter the releases by. 
+                      Releases not belonging to this branch are discarded.
+
+    Returns:
+        list: A list of dictionaries, each containing the 'name' and 'date' 
+              of a release. For example:
+              [
+                  {'name': '3.4.5', 'date': datetime.datetime(2023, 10, 1,
+                                                              12, 0, 0)}
+              ]
+
+    Raises:
+        ValueError: If there is an error in parsing the date string.
+
+    Notes:
+        If the 'appVersion' contains a '-', it is discarded.
+        If the 'created' key is missing or empty, a warning is logged.
+        If a branch is specified, releases not belonging to this branch are
+        discarded.
+    """    
+    config = importlib.import_module('config')
     releases = []
     for entry in data.get('entries', {}).get('msr', []):
         app_version = entry.get('appVersion')
@@ -224,7 +269,7 @@ def parse_msr_releases(data, branch):
         if app_version and '-' not in app_version:
             if date_str:
                 try:
-                    date_object = datetime.strptime(date_str, 
+                    date_object = datetime.strptime(date_str,
                                                     '%Y-%m-%dT%H:%M:%S.%fZ')
                     releases.append({'name': app_version, 'date': date_object})
                 except ValueError:
@@ -233,9 +278,12 @@ def parse_msr_releases(data, branch):
             else:
                 config.logger.warning("No date found for version %s",
                                       app_version)
-    
+
     if branch:
         major, minor = map(int, branch.split('.'))
-        releases = [release for release in releases if release['name'].split('.')[0] == str(major) and release['name'].split('.')[1] == str(minor)]
+        releases = [
+            release for release in releases 
+            if release['name'].split('.')[0] == str(major) 
+            and release['name'].split('.')[1] == str(minor)
+        ]
     return releases
-
