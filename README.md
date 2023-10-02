@@ -55,6 +55,7 @@ RSS Feed URL: http://localhost:4000/rss
 
 Run the test suite:
 ```shell
+pip install pytest
 pytest -v unittests.py
 ```
 
