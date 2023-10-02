@@ -16,15 +16,25 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-# Create a test client for the Flask app
 def client():
+    """
+    Create a test client for the Flask app.
+    
+    Yields:
+        FlaskClient: An instance of the app's test client.
+    """    
     with app.test_client() as client:
         yield client
 
 
 @pytest.fixture
-# Mock the get_latest_release function
 def mock_get_latest_release():
+    """
+    Mock the get_latest_release function, simulating its behavior for testing.
+    
+    Yields:
+        MagicMock: A mock object simulating the get_latest_release function.
+    """    
     with patch('app.get_latest_release') as mock:
         # Example mock data
         mock.return_value = ('1.0.0', '2023-10-01T12:00:00Z')
@@ -32,15 +42,25 @@ def mock_get_latest_release():
 
 
 @pytest.fixture
-# Mock the release_cache
 def mock_release_cache():
+    """
+    Mock the release_cache object, simulating its behavior for testing.
+    
+    Yields:
+        MagicMock: A mock object simulating the release_cache object.
+    """    
     with patch('app.release_cache', MagicMock()) as mock:
         yield mock
 
 
 @pytest.fixture
-# Mock the datetime module to control the current time
 def mock_datetime_now():
+    """
+    Mock the datetime module's now method, controlling the returned current time.
+    
+    Yields:
+        Mock: A mock object simulating the now method of the datetime module.
+    """    
     class MockDateTime(datetime):
         @classmethod
         def now(cls):
@@ -52,9 +72,15 @@ def mock_datetime_now():
         yield mock_now
 
 
-# Test the /rss route
 def test_rss_feed(client, mock_get_latest_release, mock_release_cache):
-    # Simulate a request to the /rss route
+    """
+    Test the /rss route of the app.
+    
+    Args:
+        client (FlaskClient): An instance of the app's test client.
+        mock_get_latest_release (MagicMock): Mock of the get_latest_release function.
+        mock_release_cache (MagicMock): Mock of the release_cache object.
+    """    
     response = client.get('/rss')
 
     # Assert that the response status code is 200 (OK)
@@ -62,7 +88,13 @@ def test_rss_feed(client, mock_get_latest_release, mock_release_cache):
 
 
 def test_update_cache(mock_get_latest_release, mock_release_cache):
-    # Call the update_cache function
+    """
+    Test the update_cache function of the app.
+    
+    Args:
+        mock_get_latest_release (MagicMock): Mock of the get_latest_release function.
+        mock_release_cache (MagicMock): Mock of the release_cache object.
+    """
     update_cache()
 
     # Log interactions with mocks
@@ -111,8 +143,14 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
     mock_release_cache.set.assert_has_calls(calls_set, any_order=True)
 
 
-# Test the scheduled update of the cache and RSS feed
 def test_scheduled_update(mock_release_cache, mock_datetime_now):
+    """
+    Test the scheduled update of the cache and RSS feed.
+    
+    Args:
+        mock_release_cache (MagicMock): Mock of the release_cache object.
+        mock_datetime_now (Mock): Mock of the datetime module's now method.
+    """    
     # Set the initial datetime
     initial_datetime = datetime(2023, 10, 1, 0, 0, 0)
     mock_datetime_now.now.return_value = initial_datetime

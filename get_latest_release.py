@@ -6,10 +6,7 @@ on its source of release information.
 
 Dependencies:
     - packaging.version
-    - logging
 """
-import logging
-
 from packaging.version import Version
 
 from config import PRODUCTS
@@ -41,23 +38,23 @@ def get_latest_release(product_config):
             ...  # other product-specific configurations
         }
         version, date = get_latest_release(config)
-    """    
+    """
     # Extract product name from the configuration, raise an error if not
     # present
     if 'product' not in product_config:
         raise ValueError("Product configuration must contain a 'product' key.")
-        
+
     product = product_config['product']
     logger.info('Fetching latest release for product: %s...', product)
-    
+
     # Find the appropriate fetch function from the mapping, or use a lambda
     # that returns an empty list as default
     fetch_function = product_config.get('fetch_function', lambda config: [])
-    
+
     # Call the fetch function with the product configuration
     logger.debug('Calling %s with config: %s', fetch_function, product_config)
     releases = fetch_function(product_config)
-    
+
     # If there are any releases, sort them by version and return the latest one
     if releases:
         releases.sort(key=lambda x: Version(x['name']), reverse=True)
@@ -67,15 +64,15 @@ def get_latest_release(product_config):
             product, latest_release["name"], latest_release["date"]
         )
         return latest_release['name'], latest_release['date']
-    
+
     logger.warning('No matching GA releases found for product: %s', product)
     return None, None
 
 
 if __name__ == "__main__":
-    for product_config in PRODUCTS:
-        version, date = get_latest_release(product_config)
+    for config in PRODUCTS:
+        version, date = get_latest_release(config)
         print(
-            f"Product: {product_config.get('product')}, "
+            f"Product: {config.get('product')}, "
             f"Version: {version}, Date: {date}"
         )
