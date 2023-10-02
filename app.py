@@ -172,6 +172,15 @@ def rss_feed():
     return response
 
 
+@app.route('/health')
+def health_check():
+    """
+    A simple health check endpoint returning 'OK' with a 200 status code.
+    Can be used as a liveness and readiness probe in Kubernetes.
+    """
+    return 'OK', 200
+
+
 # Initialize the cache and the scheduler
 update_cache()
 scheduler = BackgroundScheduler()
