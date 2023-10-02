@@ -53,6 +53,11 @@ python app.py
 Access the RSS feed in your web browser or through an RSS reader:
 RSS Feed URL: http://localhost:4000/rss
 
+Run the test suite:
+```shell
+pytest -v unittests.py
+```
+
 ## Configuration
 
 You can customize the behavior of the RSS server by modifying the config.py file. Some configurable options include:
