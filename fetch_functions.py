@@ -11,18 +11,91 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
-
-def fetch_mcr(product_config):
+def construct_url(repository, channel, component):
     """
-    Fetch and return the latest release information for MCR.
+    Constructs and returns the URL to be used for fetching release information
+    for MCR based on the provided repository, channel, and component.
 
-    :param product_config: Configuration dictionary containing details about
-    the product such as 'repository', 'channel', and 'component'.
-    :type product_config: dict
-    :return: A list of dictionaries each containing 'name' and 'date' of a
+    :param repository: The repository where the product is located.
+    :type repository: str
+    :param channel: The channel which the product belongs to.
+    :type channel: str
+    :param component: The component of the product.
+    :type component: str
+    :return: The constructed URL as a string.
+    :rtype: str
+    """
+    return f"{repository}/win/static/{channel}/x86_64/"
+
+def parse_page_text(page_text, component):
+    """
+    Parses the provided page_text to extract release information based on the
+    specified component, and returns a list of dictionaries containing release
+    names and dates.
+
+    :param page_text: The text of the page to be parsed for release
+    information.
+    :type page_text: str
+    :param component: The component of the product to extract release 
+                      information for.
+    :type component: str
+    :return: A list of dictionaries, each containing the 'name' and 'date' of a
              release.
     :rtype: list of dict
     """
+    pattern = re.compile(
+        rf"{component}-([0-9]+\.[0-9]+\.[0-9]+)\.zip\s+"
+        rf"([0-9]+-[0-9]+-[0-9]+)\s+([0-9]+:[0-9]+:[0-9]+)"
+    )
+    releases = []
+    for match in pattern.finditer(page_text):
+        version = match.group(1)
+        datetime_str = f"{match.group(2)} {match.group(3)}"
+        datetime_object = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+        releases.append({'name': version, 'date': datetime_object})
+    return releases
+
+def fetch_mcr(product_config):
+    """
+    Fetch and return the latest release information for MCR. 
+
+    This function, utilizing helper functions 'construct_url' and
+    'parse_page_text', fetches the latest release information based on the
+    given product configuration. It constructs the URL dynamically, sends an
+    HTTP GET request, and parses the received HTML page to extract release
+    details.
+
+    It utilizes the logger from the 'config' module to log the process details
+    and any potential errors.
+
+    Parameters:
+        product_config (dict): A dictionary containing product configuration
+            details like 'repository', 'channel', and 'component'.
+            Example:
+                {
+                    'repository': '<REPOSITORY_URL>',
+                    'channel': '<CHANNEL>',
+                    'component': '<COMPONENT>'
+                }
+
+    Returns:
+        list: A list of dictionaries, each containing the 'name' and 'date' of
+              a release.
+              Example:
+                  [{'name': '3.4.5', 'date': datetime.datetime(2023, 10, 1,
+                                                               12, 0, 0)}]
+
+    Raises:
+        requests.RequestException: For issues related to the HTTP request, such
+                                   as connectivity problems or timeout.
+        ValueError: For any unexpected errors during the execution of this
+        function.
+
+    Notes:
+        This function is part of a module that contains functions to fetch the
+        latest release information for specified products from different types
+        of repositories and registries.
+    """    
     config = importlib.import_module('config')
     config.logger.debug('fetch_mcr called with configuration: %s',
                         product_config)
@@ -30,8 +103,8 @@ def fetch_mcr(product_config):
     repository = product_config.get('repository')
     channel = product_config.get('channel')
     component = product_config.get('component')
-    url = f"{repository}/win/static/{channel}/x86_64/"
 
+    url = construct_url(repository, channel, component)
     config.logger.debug('Constructed URL: %s', url)
 
     try:
@@ -44,21 +117,9 @@ def fetch_mcr(product_config):
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text()
 
-        pattern = re.compile(
-            rf"{component}-([0-9]+\.[0-9]+\.[0-9]+)\.zip\s+"
-            rf"([0-9]+-[0-9]+-[0-9]+)\s+([0-9]+:[0-9]+:[0-9]+)"
-        )
-
-        releases = []
-        for match in pattern.finditer(page_text):
-            version = match.group(1)
-            datetime_str = f"{match.group(2)} {match.group(3)}"
-            datetime_object = datetime.strptime(datetime_str,
-                                                '%Y-%m-%d %H:%M:%S')
-            releases.append({'name': version, 'date': datetime_object})
+        releases = parse_page_text(page_text, component)
 
         config.logger.debug('Parsed releases: %s', releases)
-
         return releases
 
     except requests.RequestException as request_exception:
