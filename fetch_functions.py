@@ -144,53 +144,53 @@ def fetch_mke(product_config):
         return []
 
 def fetch_msr(product_config):
-"""
-This code block fetches release information for a specified MSR product from
-either the Mirantis registry or a Helm chart repository, based on the provided
-configuration. It constructs the appropriate URL, sends an HTTP GET request,
-and processes the response to extract release details. 
+    """
+    This code block fetches release information for a specified MSR product
+    from either the Mirantis registry or a Helm chart repository, based on the
+    provided configuration. It constructs the appropriate URL, sends an HTTP
+    GET request, and processes the response to extract release details. 
 
-Configuration settings are imported, and the logger from the config module is
-utilized to log process details and any potential errors. The URL is
-constructed dynamically based on the product configuration and the major
-version of the specified branch.
+    Configuration settings are imported, and the logger from the config module
+    is utilized to log process details and any potential errors. The URL is
+    constructed dynamically based on the product configuration and the major
+    version of the specified branch.
 
-The code sends an HTTP GET request to the constructed URL and logs the HTTP
-response status and text. If the branch_major is 3 or above, the response text
-is interpreted as YAML; otherwise, it's interpreted as JSON. The parsed data,
-along with the branch information, is then passed to the 'parse_msr_releases'
-function to extract the release details.
+    The code sends an HTTP GET request to the constructed URL and logs the HTTP
+    response status and text. If the branch_major is 3 or above, the response
+    text is interpreted as YAML; otherwise, it's interpreted as JSON. The
+    parsed data, along with the branch information, is then passed to the
+    'parse_msr_releases' function to extract the release details.
 
-In case of errors during the HTTP request, such as connectivity problems,
-timeout, or unsuccessful HTTP status, appropriate exceptions are caught, and
-error messages are logged. If an error occurs during the response text parsing
-as YAML or JSON, a ValueError is caught and logged.
+    In case of errors during the HTTP request, such as connectivity problems,
+    timeout, or unsuccessful HTTP status, appropriate exceptions are caught,
+    and error messages are logged. If an error occurs during the response text
+    parsing as YAML or JSON, a ValueError is caught and logged.
 
-Parameters:
-    product_config (dict): Contains product configuration details like
-        'repository', 'registry', and 'branch'.
-        Example:
-            {
-                'repository': 'msr/msr',
-                'registry': 'https://registry.mirantis.com',
-                'branch': '3.1'
-            }
+    Parameters:
+        product_config (dict): Contains product configuration details like
+            'repository', 'registry', and 'branch'.
+            Example:
+                {
+                    'repository': 'msr/msr',
+                    'registry': 'https://registry.mirantis.com',
+                    'branch': '3.1'
+                }
 
-Returns:
-    list: Returns a list of dictionaries, each containing the 'name' and 'date'
-    of a release, returned by the 'parse_msr_releases' function. Returns an
-    empty list if any error occurs during the process.
+    Returns:
+        list: Returns a list of dictionaries, each containing the 'name' and
+        'date' of a release, returned by the 'parse_msr_releases' function.
+        Returns an empty list if any error occurs during the process.
 
-Raises:
-    requests.RequestException: For issues related to the HTTP request, such as
-    connectivity problems or timeout.
-    requests.HTTPError: If the HTTP request receives an unsuccessful status
-    code.
-    yaml.YAMLError: If there is an error in parsing the YAML response from the
-    Helm chart repository.
-    ValueError: For errors in interpreting the response text as YAML or JSON,
-    or in parsing the date string in 'parse_msr_releases'.
-"""
+    Raises:
+        requests.RequestException: For issues related to the HTTP request, such 
+        asconnectivity problems or timeout.
+        requests.HTTPError: If the HTTP request receives an unsuccessful status
+        code.
+        yaml.YAMLError: If there is an error in parsing the YAML response from
+        the Helm chart repository.
+        ValueError: For errors in interpreting the response text as YAML or
+        JSON, or in parsing the date string in 'parse_msr_releases'.
+    """
     config = importlib.import_module('config')
     config.logger.debug('fetch_msr called with configuration: %s',
                         product_config)
