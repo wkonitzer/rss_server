@@ -13,6 +13,7 @@ RUN pip install -r requirements.txt
 # Copy the other specific files into the container at /app
 COPY app.py ./app.py
 COPY get_latest_release.py ./get_latest_release.py
+COPY config.py ./config.py
 
 # Make port 4000 available to the world outside this container
 EXPOSE 4000
