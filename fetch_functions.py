@@ -22,7 +22,7 @@ def fetch_mcr(product_config):
     :return: A list of dictionaries each containing 'name' and 'date' of a
              release.
     :rtype: list of dict
-    """    
+    """
     config = importlib.import_module('config')
     config.logger.debug('fetch_mcr called with configuration: %s',
                         product_config)
@@ -99,7 +99,7 @@ def fetch_mke(product_config):
     Raises:
         ValueError: If required keys are missing in the product_config.
         requests.RequestException: For issues related to the HTTP request.
-    """    
+    """
     config = importlib.import_module('config')
     config.logger.debug('fetch_mke called with configuration: %s',
                         product_config)
@@ -190,7 +190,7 @@ def fetch_msr(product_config):
         chart repository) based on the branch version specified in the
         product_config. It filters the fetched releases based on the specified
         branch and logs errors and warnings for various failure scenarios.
-    """    
+    """
     config = importlib.import_module('config')
     config.logger.debug('fetch_msr called with configuration: %s',
                         product_config)
@@ -240,8 +240,9 @@ def fetch_msr(product_config):
                         config.logger.warning(
                             "No date found for version %s", app_version)
         except (requests.RequestException,
-                requests.HTTPError, yaml.YAMLError) as e:
-            config.logger.error("Error fetching %s: %s", url, e)
+                requests.HTTPError, yaml.YAMLError) as request_error:
+            config.logger.error("Error fetching %s: %s", url, request_error)
+            return []
     else:
         url = f"{registry}/v2/repositories/{repository}/tags"
         config.logger.debug('Constructed URL: %s', url)
@@ -266,10 +267,11 @@ def fetch_msr(product_config):
                     date_object = datetime.strptime(date_str,
                                                     '%Y-%m-%dT%H:%M:%S.%fZ')
                     releases.append({'name': tag_name, 'date': date_object})
-        except (requests.RequestException, requests.HTTPError) as e:
-            config.logger.error("Error fetching %s: %s", url, e)
-        except Exception as e:
-            config.logger.error("An unexpected error occurred: %s", e)
+        except (requests.RequestException, requests.HTTPError) as req_error:
+            config.logger.error("Error fetching %s: %s", url, req_error)
+            return []
+        except ValueError as value_error:
+            config.logger.error("Value error occurred: %s", value_error)
             return []
 
     config.logger.debug('Parsed releases before filtering: %s', releases)
