@@ -23,6 +23,12 @@ spec:
         image: msr2.konitzer.dev/wkonitzer/rss_server:latest
         ports:
         - containerPort: 4000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "70Mi"
+          limits:
+            memory: "100Mi"       
       imagePullSecrets:
       - name: my-registry-secret
 ---
