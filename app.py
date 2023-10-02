@@ -16,6 +16,7 @@ To run:
 import os
 import time
 import logging
+import concurrent.futures
 from datetime import datetime as dt
 
 from flask import Flask, Response
@@ -88,9 +89,28 @@ def update_cache():
     Updates the cache with the latest release info for each product.
     This function is intended to be run as a scheduled job.
     """
-
     logging.info('Starting cache update...')
-    for product in products:
+
+    def fetch_and_cache(product):
+        """
+        Fetches the latest release information for a given product and updates
+        the cache.
+        
+        This function constructs a key from the available fields in the product
+        dictionary, fetches the latest release information for the constructed
+        key, and updates the cache with the fetched information.
+        
+        Parameters:
+        product (dict): A dictionary containing the details of the product for
+                        which the latest release information needs to be
+                        fetched and cached. The dictionary may contain fields
+                        like 'product', 'repository', 'channel', 'component',
+                        'registry', and 'branch'.
+        
+        Note:
+        This function is intended to be used as a worker function with
+        concurrent.futures.ThreadPoolExecutor for parallel execution.
+        """        
         # Determine the available keys in the product dictionary
         available_keys = [key for key in ['product', 'repository',
                                           'channel', 'component', 'registry',
@@ -104,6 +124,10 @@ def update_cache():
         release_info = get_latest_release(product)
         release_cache.set(key, release_info)
         logging.info('Cache updated for product: %s', product["product"])
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(fetch_and_cache, products)
+
     logging.info('Cache update complete.')
 
 
@@ -126,7 +150,51 @@ def rss_feed():
         language="en",
     )
 
-    for product in products:
+    def process_product(product):
+        """
+        Processes the given product and updates the RSS feed with the latest
+        release information.
+        
+        This function constructs a cache key based on the available keys in the
+        given product and  attempts to retrieve the release_info from the
+        cache. If the cache does not contain valid release_info, the function
+        fetches the latest release information, updates the cache, and logs an
+        error if the fetched release_info is invalid. After processing the
+        release_info, it updates the RSS feed with a new item containing the
+        latest release details, including the version, release date, link, and
+        description.
+        
+        Parameters:
+        product (dict): A dictionary containing the details of the product to
+                        be processed, including keys like 'product',
+                        'repository', 'channel', 'component', 'registry', and
+                        'branch'.
+        
+        Returns:
+        None: This function does not return a value; it updates the global RSS
+        feed directly.
+        
+        Side Effects:
+        - Updates the global RSS feed with a new item, if valid release_info is
+          found or fetched.
+        - Logs an error message if invalid release_info is encountered.
+        - Updates the global release_cache with fetched release_info.
+        
+        Example:
+        --------
+        >>> product = {
+        ...    'product': 'mcr',
+        ...    'repository': 'https://repos.mirantis.com',
+        ...    'channel': 'stable',
+        ...    'component': 'docker',
+        ... }
+        >>> process_product(product)  # Updates the RSS feed with the latest
+        release of the 'mcr' product.
+
+        Note:
+        This function is intended to be used as a worker function with
+        concurrent.futures.ThreadPoolExecutor for parallel execution.
+        """        
         # Determine the available keys in the product dictionary
         available_keys = [key for key in ['product', 'repository',
                                           'channel', 'component', 'registry',
@@ -148,9 +216,7 @@ def rss_feed():
                 # fetched data is still invalid
                 app.logger.error('Invalid release_info for key %s: %s',
                                  key, release_info)
-                # Skip to the next iteration of the loop, ignoring the current
-                # product
-                continue
+                return
 
             # Update the cache with the valid fetched data
             release_cache.set(key, release_info)
@@ -178,6 +244,9 @@ def rss_feed():
             description=description,
             pubdate=release_date or dt.now(),
         )
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(process_product, products)
 
     # Before calling writeString, ensure all items have real datetime objects
     # for pubdate
