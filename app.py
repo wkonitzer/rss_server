@@ -102,7 +102,7 @@ def rss_feed():
     logging.info('Generating RSS feed...')
     feed = feedgenerator.Rss201rev2Feed(
         title="Mirantis Software Releases",
-        link="http://localhost:5000/",
+        link="https://mirantis.com",
         description="Latest Mirantis software releases",
         language="en",
     )
