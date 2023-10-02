@@ -14,6 +14,7 @@ RUN pip install -r requirements.txt
 COPY app.py ./app.py
 COPY get_latest_release.py ./get_latest_release.py
 COPY config.py ./config.py
+COPY fetch_functions.py ./fetch_functions.py
 
 # Make port 4000 available to the world outside this container
 EXPOSE 4000
