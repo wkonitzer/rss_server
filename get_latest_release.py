@@ -61,14 +61,14 @@ def get_latest_release(product='mcr',
         ('1.6.17', datetime.datetime(2023, 2, 23, 20, 47, 7))
     """
 
-    logger.info(f'Fetching latest release for product: {product} ...')
+    logger.info('Fetching latest release for product: %s ...', product)
 
     if product == 'mcr':
         url = f"{repository}/win/static/{channel}/x86_64/"
         try:
             response = requests.get(url, timeout=5)
         except requests.exceptions.Timeout:
-            app.logger.error('Request timed out for URL: %s', url)
+            logger.error('Request timed out for URL: %s', url)
         if response.status_code != 200:
             logger.error('Failed to fetch data from %s. Status code: %s',
                          url, response.status_code)
@@ -104,7 +104,7 @@ def get_latest_release(product='mcr',
         try:
             response = requests.get(url, timeout=5)
         except requests.exceptions.Timeout:
-            app.logger.error('Request timed out for URL: %s', url)
+            logger.error('Request timed out for URL: %s', url)
         if response.status_code != 200:
             return "API request to {url} failed."
 
@@ -127,7 +127,7 @@ def get_latest_release(product='mcr',
             try:
                 response = requests.get(url, timeout=5)
             except requests.exceptions.Timeout:
-                app.logger.error('Request timed out for URL: %s', url)
+                logger.error('Request timed out for URL: %s', url)
             if response.status_code != 200:
                 return f"Failed to retrieve version info from [{url}]", None
 
@@ -161,7 +161,7 @@ def get_latest_release(product='mcr',
             try:
                 response = requests.get(url, timeout=5)
             except requests.exceptions.Timeout:
-                app.logger.error('Request timed out for URL: %s', url)
+                logger.error('Request timed out for URL: %s', url)
             if response.status_code != 200:
                 return (
                     f"Failed to retrieve tags for repository [{repository}]",
