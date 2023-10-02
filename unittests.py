@@ -1,9 +1,14 @@
+"""
+This module contains unit tests for verifying the functionality of the app.
+"""
 # pytest -v unittests.py
-import pytest
 from datetime import datetime
 from unittest.mock import patch, Mock, MagicMock, call
-from app import app, update_cache, rss_feed
 import logging
+
+import pytest
+
+from app import app, update_cache, rss_feed
 
 # Configure logging for tests
 logging.basicConfig(level=logging.DEBUG)
@@ -61,14 +66,11 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
     update_cache()
 
     # Log interactions with mocks
-    logger.debug(
-        f'Mock get_latest_release called with: '
-        f'{mock_get_latest_release.call_args_list}'
-    )
-    logger.debug(
-        f'Mock release_cache.set called with: '
-        f'{mock_release_cache.set.call_args_list}'
-    )
+    logger.debug('Mock get_latest_release called with: %s',
+                 mock_get_latest_release.call_args_list)
+
+    logger.debug('Mock release_cache.set called with: %s',
+                 mock_release_cache.set.call_args_list)
 
     # Assert that the get_latest_release was called with the expected arguments
     # for each product

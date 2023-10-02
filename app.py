@@ -59,7 +59,7 @@ class SimpleCache:
         Returns:
         value (Any): The value associated with the given key if the key exists
         in the cache and the value is not timed out, else None.
-        """        
+        """
         data = self.cache.get(key)
         if data:
             timestamp, value = data
@@ -74,7 +74,7 @@ class SimpleCache:
         Parameters:
         key (str): The key for which the value needs to be stored.
         value (Any): The value that needs to be stored for the given key.
-        """        
+        """
         self.cache[key] = (time.time(), value)
 
 
@@ -146,8 +146,8 @@ def rss_feed():
             if release_info is None or len(release_info) < 2:
                 # Log an error message and continue to the next product if
                 # fetched data is still invalid
-                app.logger.error(
-                    f'Invalid release_info for key {key}: {release_info}')
+                app.logger.error('Invalid release_info for key %s: %s',
+                                 key, release_info)
                 # Skip to the next iteration of the loop, ignoring the current
                 # product
                 continue

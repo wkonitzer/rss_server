@@ -65,7 +65,10 @@ def get_latest_release(product='mcr',
 
     if product == 'mcr':
         url = f"{repository}/win/static/{channel}/x86_64/"
-        response = requests.get(url)
+        try:
+            response = requests.get(url, timeout=5)
+        except requests.exceptions.Timeout:
+            app.logger.error('Request timed out for URL: %s', url)
         if response.status_code != 200:
             logger.error('Failed to fetch data from %s. Status code: %s',
                          url, response.status_code)
@@ -98,7 +101,10 @@ def get_latest_release(product='mcr',
     elif product == 'mke':
         releases = []
         url = f"{registry}/v2/repositories/{repository}/tags"
-        response = requests.get(url)
+        try:
+            response = requests.get(url, timeout=5)
+        except requests.exceptions.Timeout:
+            app.logger.error('Request timed out for URL: %s', url)
         if response.status_code != 200:
             return "API request to {url} failed."
 
@@ -118,7 +124,10 @@ def get_latest_release(product='mcr',
         branch_major = int(branch.split('.')[0]) if branch else None
         if branch_major and branch_major >= 3:
             url = f"{registry}/charts/{repository}/index.yaml"
-            response = requests.get(url)
+            try:
+                response = requests.get(url, timeout=5)
+            except requests.exceptions.Timeout:
+                app.logger.error('Request timed out for URL: %s', url)
             if response.status_code != 200:
                 return f"Failed to retrieve version info from [{url}]", None
 
@@ -149,7 +158,10 @@ def get_latest_release(product='mcr',
             registry = "https://hub.docker.com"
             repository = "mirantis/dtr"
             url = f"{registry}/v2/repositories/{repository}/tags"
-            response = requests.get(url)
+            try:
+                response = requests.get(url, timeout=5)
+            except requests.exceptions.Timeout:
+                app.logger.error('Request timed out for URL: %s', url)
             if response.status_code != 200:
                 return (
                     f"Failed to retrieve tags for repository [{repository}]",
