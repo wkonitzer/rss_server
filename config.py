@@ -25,6 +25,41 @@ PRODUCTS = [
 ]
 
 """
+import os
+import logging
+
+from fetch_functions import fetch_mcr, fetch_mke, fetch_msr
+
+
+# Get logging level from environment variable. If not set, default to INFO
+LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO')
+
+# Convert string level to logging level
+LOGGING_LEVEL = getattr(logging, LOGGING_LEVEL.upper(), logging.INFO)
+
+# Define a constant for the logging level.
+LOGGING_LEVEL = logging.INFO  # Change to desired logging level
+
+# Configure the root logger.
+logging.basicConfig(level=LOGGING_LEVEL)
+
+# If you want a specific logger configuration for a module, you can do it here.
+# Using __name__ would be more dynamic and can adapt to different modules
+logger = logging.getLogger(__name__)
+logger.setLevel(LOGGING_LEVEL)
+
+# Adding a console handler explicitly (optional, but helpful if the
+# basicConfig is not working as expected)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(LOGGING_LEVEL)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+console_handler.setFormatter(formatter)
+
+# Avoiding duplicate logging, in case a handler is already added by basicConfig
+if not logger.hasHandlers():
+    logger.addHandler(console_handler)
 
 # List of Mirantis products and their repository information
 PRODUCTS = [
@@ -32,27 +67,30 @@ PRODUCTS = [
         'product': 'mcr',
         'repository': 'https://repos.mirantis.com',
         'channel': 'stable',
-        'component': 'docker'
+        'component': 'docker',
+        'fetch_function': fetch_mcr
     },
     {
         'product': 'mke',
         'repository': 'mirantis/ucp',
-        'registry': 'https://hub.docker.com'
+        'registry': 'https://hub.docker.com',
+        'fetch_function': fetch_mke
     },
     {
         'product': 'msr',
         'repository': 'msr/msr',
         'registry': 'https://registry.mirantis.com',
-        'branch': '3.1'
+        'branch': '3.1',
+        'fetch_function': fetch_msr
     },
 ]
 
 # Cache expiration time in seconds
-CACHE_TIMEOUT = 86400  # 24 hours
+CACHE_TIMEOUT = int(os.environ.get('CACHE_TIMEOUT', 86400))  # 24 hours
 
 # Port and host settings
-PORT = 4000
-HOST = "0.0.0.0"
+PORT = int(os.environ.get('PORT', 4000))
+HOST = os.environ.get('HOST', '0.0.0.0')
 
 # Scheduler interval in hours
-SCHEDULER_INTERVAL = 12
+SCHEDULER_INTERVAL = int(os.environ.get('SCHEDULER_INTERVAL', 12))

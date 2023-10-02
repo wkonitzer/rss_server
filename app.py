@@ -101,7 +101,7 @@ def update_cache():
         key = '_'.join(key_parts)
 
         # Fetch the latest release info and update the cache
-        release_info = get_latest_release(**product)
+        release_info = get_latest_release(product)
         release_cache.set(key, release_info)
         logging.info('Cache updated for product: %s', product["product"])
     logging.info('Cache update complete.')
@@ -142,7 +142,7 @@ def rss_feed():
         if release_info is None or len(release_info) < 2:
             # If not in the cache, fetch the latest release info and update the
             # cache
-            release_info = get_latest_release(**product)
+            release_info = get_latest_release(product)
             if release_info is None or len(release_info) < 2:
                 # Log an error message and continue to the next product if
                 # fetched data is still invalid

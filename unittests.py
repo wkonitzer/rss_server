@@ -3,7 +3,7 @@ This module contains unit tests for verifying the functionality of the app.
 """
 # pytest -v unittests.py
 from datetime import datetime
-from unittest.mock import patch, Mock, MagicMock, call
+from unittest.mock import patch, Mock, MagicMock, call, ANY
 import logging
 
 import pytest
@@ -75,12 +75,26 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
     # Assert that the get_latest_release was called with the expected arguments
     # for each product
     calls_get_latest_release = [
-        call(product='mcr', repository='https://repos.mirantis.com',
-             channel='stable', component='docker'),
-        call(product='mke', repository='mirantis/ucp',
-             registry='https://hub.docker.com'),
-        call(product='msr', repository='msr/msr',
-             registry='https://registry.mirantis.com', branch='3.1')
+        call({
+            'product': 'mcr',
+            'repository': 'https://repos.mirantis.com',
+            'channel': 'stable',
+            'component': 'docker',
+            'fetch_function': ANY  # use ANY since the actual function reference may not be easily available
+        }),
+        call({
+            'product': 'mke',
+            'repository': 'mirantis/ucp',
+            'registry': 'https://hub.docker.com',
+            'fetch_function': ANY
+        }),
+        call({
+            'product': 'msr',
+            'repository': 'msr/msr',
+            'registry': 'https://registry.mirantis.com',
+            'branch': '3.1',
+            'fetch_function': ANY
+        }),
     ]
     mock_get_latest_release.assert_has_calls(
         calls_get_latest_release, any_order=True)
@@ -89,12 +103,8 @@ def test_update_cache(mock_get_latest_release, mock_release_cache):
     calls_set = [
         call('mcr_https://repos.mirantis.com_stable_docker',
              ('1.0.0', '2023-10-01T12:00:00Z')),
-        # Adjusted to match the pattern and the expected return value from
-        # get_latest_release
         call('mke_mirantis/ucp_https://hub.docker.com',
              ('1.0.0', '2023-10-01T12:00:00Z')),
-        # Adjusted to match the pattern and the expected return value from
-        # get_latest_release
         call('msr_msr/msr_https://registry.mirantis.com_3.1',
              ('1.0.0', '2023-10-01T12:00:00Z'))
     ]
