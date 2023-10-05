@@ -727,7 +727,5 @@ def fetch_k0s(product_config):
 
     except requests.RequestException as error:
         config.logger.error("Error fetching data from GitHub: %s", error)
-    except Exception as error:
-        config.logger.error("An unexpected error occurred: %s", error)
 
     return releases
