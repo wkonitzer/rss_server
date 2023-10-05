@@ -18,19 +18,19 @@ def generate_product_link(product, version):
         str: The URL link specific to the product and version.
     """
     major_minor = '.'.join(version.split('.')[:2])
-    
+
     if product['product'] == 'mcc':
         # Define link format for 'mcc'
         return (
             f"https://docs.mirantis.com/container-cloud/latest/"
             f"release-notes/releases/{version.replace('.', '-')}.html"
         )
-    elif product['product'] == 'mosk':
+    if product['product'] == 'mosk':
         version_parts = version.split('.')
         # Always take the first two parts for the series
         series_format = '.'.join(version_parts[:2])
         version_format = '.'.join(version_parts)  # Convert the entire version
-        
+
         return (
             f"https://docs.mirantis.com/mosk/latest/"
             f"release-notes/{series_format}-series/"

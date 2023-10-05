@@ -166,7 +166,7 @@ def test_update_cache(mock_get_release, mock_cache):
             'url': 'https://binary.mirantis.com',
             'prefix': 'releases/cluster/',
             'fetch_function': ANY
-        }),                
+        }),
     ]
     mock_get_release.assert_has_calls(
         calls_get_latest_release, any_order=True)
@@ -182,7 +182,7 @@ def test_update_cache(mock_get_release, mock_cache):
         call('mcc_https://binary.mirantis.com_releases/kaas/',
              ('1.0.0', '2023-10-01T12:00:00Z')),
         call('mosk_https://binary.mirantis.com_releases/cluster/',
-             ('1.0.0', '2023-10-01T12:00:00Z'))                   
+             ('1.0.0', '2023-10-01T12:00:00Z'))
     ]
     mock_cache.set.assert_has_calls(calls_set, any_order=True)
 
@@ -225,7 +225,7 @@ def test_scheduled_update(mock_cache, mock_dt_now):
         call('mcc_https://binary.mirantis.com_releases/kaas/',
              ('1.1.0', '2023-10-02T12:00:00Z')),
         call('mosk_https://binary.mirantis.com_releases/cluster/',
-             ('1.1.0', '2023-10-02T12:00:00Z'))         
+             ('1.1.0', '2023-10-02T12:00:00Z'))
     ]
 
     # Assert that the cache was updated with the new version for each product

@@ -433,7 +433,8 @@ def fetch_releases_from_bucket(bucket_url_with_prefix):
     - requests.HTTPError: If there's an issue with the request to the bucket
       URL.
     """
-    response = requests.get(bucket_url_with_prefix)
+    config = importlib.import_module('config')
+    response = requests.get(bucket_url_with_prefix, timeout=5)
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, 'xml')
@@ -446,7 +447,7 @@ def fetch_releases_from_bucket(bucket_url_with_prefix):
 
         if key_tag and date_tag:
             key_parts = key_tag.text.split('/')
-            if len(key_parts) == 3: 
+            if len(key_parts) == 3:
                 version = key_parts[2].replace('.yaml', '')
                 date_str = date_tag.text
                 try:
@@ -502,7 +503,7 @@ def fetch_product(product_config, product_name, post_process_func=None):
     config = importlib.import_module('config')
     url = product_config.get('url')
     prefix = product_config.get('prefix')
-    
+
     config.logger.debug('fetch_%s called. Target URL: %s', product_name, url)
 
     try:
@@ -613,7 +614,7 @@ def post_process_mosk(releases, bucket_url, prefix):
     Notes:
     - Logging is performed throughout the function for debugging purposes
       using a logger from the imported 'config' module.
-    """    
+    """
     config = importlib.import_module('config')
 
     # Filter out versions with hyphens
@@ -626,14 +627,14 @@ def post_process_mosk(releases, bucket_url, prefix):
 
     for release in sorted_releases:
         latest_release_url = f"{bucket_url}/{prefix}{release['name']}.yaml"
-        release_content = requests.get(latest_release_url).text
+        release_content = requests.get(latest_release_url, timeout=5).text
 
         snippet_start = max(release_content.lower().find("openstack") - 20, 0)
         snippet_end = min(release_content.lower().find("openstack") + 28,
                           len(release_content))
         config.logger.debug("Content Snippet around 'openstack': %s",
                             release_content[snippet_start:snippet_end])
-            
+
         # Check for the presence of "openstack"
         if re.search(r'\bopenstack\b', release_content, re.IGNORECASE):
             # Now you have the latest_release with "openstack" in its content
@@ -648,8 +649,8 @@ def post_process_mosk(releases, bucket_url, prefix):
     # Now, we need to get the content of this latest release and parse it
     latest_release_url = (f"{bucket_url}/releases/cluster/"
                           f"{latest_release['name']}.yaml")
-    release_content = requests.get(latest_release_url).text
-        
+    release_content = requests.get(latest_release_url, timeout=5).text
+
     # Parsing the version from the release content
     match = re.search(r'version:\s*(\d+\.\d+\.\d+)\+(\d+\.\d+\.\d+)',
                       release_content)
@@ -659,6 +660,6 @@ def post_process_mosk(releases, bucket_url, prefix):
         config.logger.debug("Extracted version prefix: %s", version_prefix)
         config.logger.debug("Extracted version suffix: %s", version_suffix)
         return [{'name': version_suffix, 'date': latest_release['date']}]
-    else:
-        config.logger.error("Version not found in the release content.")
-        return []    
+
+    config.logger.error("Version not found in the release content.")
+    return []

@@ -91,7 +91,7 @@ PRODUCTS = [
         'url': 'https://binary.mirantis.com',
         'prefix': 'releases/cluster/',
         'fetch_function': fetch_mosk
-    },         
+    },
 ]
 
 # Cache expiration time in seconds

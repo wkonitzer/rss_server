@@ -231,7 +231,6 @@ def rss_feed():
         if isinstance(release_date, str):
             release_date = dt.fromisoformat(release_date.rstrip('Z'))
 
-        major_minor = '.'.join(version.split('.')[:2])
         link = generate_product_link(product, version)
         description = (
             f'<a href="{link}">Release notes for '
