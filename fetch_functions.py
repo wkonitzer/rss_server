@@ -393,7 +393,7 @@ def fetch_bucket_url_from_response(response):
     """
     soup = BeautifulSoup(response.text, 'html.parser')
     bucket_url_element = soup.find("script",
-                          text=re.compile(r'BUCKET_URL\s*=\s*["\'](.*?)["\']'))
+                        string=re.compile(r'BUCKET_URL\s*=\s*["\'](.*?)["\']'))
 
     if not bucket_url_element:
         return None
@@ -503,7 +503,7 @@ def fetch_product(product_config, product_name, post_process_func=None):
     url = product_config.get('url')
     prefix = product_config.get('prefix')
     
-    config.logger.debug(f'fetch_{product_name} called. Target URL: {url}')
+    config.logger.debug('fetch_%s called. Target URL: %s', product_name, url)
 
     try:
         response = requests.get(url, timeout=5)
@@ -524,8 +524,10 @@ def fetch_product(product_config, product_name, post_process_func=None):
 
         return releases
 
-    except requests.RequestException as e:
-        config.logger.error(f"Error fetching {product_name} releases: %s", e)
+    except requests.RequestException as error:
+        config.logger.error(
+            f"Error fetching {product_name} releases: %s", error
+        )
         return []
 
 def fetch_mcc(product_config):
