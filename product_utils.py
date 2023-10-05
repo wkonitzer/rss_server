@@ -25,6 +25,7 @@ def generate_product_link(product, version):
             f"https://docs.mirantis.com/container-cloud/latest/"
             f"release-notes/releases/{version.replace('.', '-')}.html"
         )
+
     if product['product'] == 'mosk':
         version_parts = version.split('.')
         # Always take the first two parts for the series
@@ -36,6 +37,10 @@ def generate_product_link(product, version):
             f"release-notes/{series_format}-series/"
             f"{version_format}.html"
         )
+
+    if product['product'] == 'k0s':
+        return (f"https://github.com/k0sproject/k0s/releases/tag/"
+                f"v{version}+k0s.0")    
 
     # Default link format (which was already there for other products)
     return (f"https://docs.mirantis.com/{product['product']}/"

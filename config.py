@@ -28,7 +28,7 @@ PRODUCTS = [
 import os
 import logging
 
-from fetch_functions import fetch_mcr, fetch_mke, fetch_msr, fetch_mcc, fetch_mosk
+from fetch_functions import fetch_mcr, fetch_mke, fetch_msr, fetch_mcc, fetch_mosk, fetch_k0s
 
 
 # Get logging level from environment variable. If not set, default to INFO
@@ -92,6 +92,11 @@ PRODUCTS = [
         'prefix': 'releases/cluster/',
         'fetch_function': fetch_mosk
     },
+    {
+        'product': 'k0s',
+        'url': 'https://github.com/k0sproject/k0s/releases/latest',
+        'fetch_function': fetch_k0s
+    },    
 ]
 
 # Cache expiration time in seconds

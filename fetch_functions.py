@@ -663,3 +663,48 @@ def post_process_mosk(releases, bucket_url, prefix):
 
     config.logger.error("Version not found in the release content.")
     return []
+
+def fetch_k0s(product_config):
+    """
+    Fetch the latest release information for the k0s product from GitHub.
+
+    This function retrieves the latest release information for the k0s product
+    from its GitHub releases page. It extracts the version number from the URL
+    and the release datetime from the page's HTML content.
+
+    Args:
+        product_config (dict): Configuration dictionary for the product. 
+                               It should contain a 'url' key pointing to 
+                               the GitHub releases page for the product.
+
+    Returns:
+        list[dict]: A list containing a dictionary with the keys:
+                    - 'name': The version number of the release
+                              (e.g., '1.28.2').
+                    - 'date': The release date as a datetime object.
+                    If no release information is found, the list will be empty.
+
+    Raises:
+        Requests exceptions for network-related issues.
+    """
+    config = importlib.import_module('config')
+    url = product_config.get('url')
+    response = requests.get(url, allow_redirects=True)
+    releases = []
+
+    # Extract version from the URL
+    version_match = re.search(r'/releases/tag/v([\d.]+)', response.url)
+    if version_match:
+        version = version_match.group(1)
+
+        # Extract datetime value from the HTML content
+        soup = BeautifulSoup(response.content, 'html.parser')
+        datetime_element = soup.find('relative-time', attrs={"datetime": True})
+
+        if datetime_element:
+            datetime_str = datetime_element['datetime']
+            release_datetime = datetime.fromisoformat(datetime_str)
+            naive_datetime = release_datetime.astimezone().replace(tzinfo=None)
+            releases.append({'name': version, 'date': naive_datetime})
+
+    return releases
