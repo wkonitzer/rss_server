@@ -131,6 +131,115 @@ def fetch_mcr(product_config):
         return []
 
 
+def fetch_mcp_product_releases(response_content):
+    """
+    Fetch the product releases from a directory listing.
+
+    Args:
+        response_content (str): The directory listing in string format.
+
+    Returns:
+        list[dict]: A list containing dictionaries with the keys:
+                    - 'name': The version number of the release (
+                              e.g., '1.28.2').
+                    - 'date': The release date as a datetime object.
+                    If no release information is found, the list will be empty.
+    """
+    
+    # Regular expression to match the provided format
+    regex_pattern = r"(\d+\.\d+\.\d+)/\s+(\d+-\w+-\d+)\s+(\d+:\d+)"
+    
+    matches = re.findall(regex_pattern, response_content)
+
+    releases = []
+    for version, date, time in matches:
+        # Ignore specific version
+        if version == "2019.99.99":
+            continue
+
+        # Parsing the date and time into a datetime object
+        release_date_str = f"{date} {time}"
+        release_datetime = datetime.strptime(release_date_str,
+                                             "%d-%b-%Y %H:%M")
+        
+        releases.append({'name': version, 'date': release_datetime})
+        
+    return releases
+
+
+def fetch_mcp(product_config):
+    """
+    Fetch and return the latest release information for MCR. 
+
+    This function, utilizing helper function 'fetch_mcp_product_releases'
+    etches the latest release information based on the
+    given product configuration. It constructs the URL dynamically, sends an
+    HTTP GET request, and parses the received HTML page to extract release
+    details.
+
+    It utilizes the logger from the 'config' module to log the process details
+    and any potential errors.
+
+    Parameters:
+        product_config (dict): A dictionary containing product configuration
+            details like 'repository', and 'channel',
+            Example:
+                {
+                    'repository': '<REPOSITORY_URL>',
+                    'channel': '<CHANNEL>',
+                }
+
+    Returns:
+        list: A list of dictionaries, each containing the 'name' and 'date' of
+              a release.
+              Example:
+                  [{'name': '2019.2.24', 'date': datetime.datetime(2023, 10, 1,
+                                                               12, 0, 0)}]
+
+    Raises:
+        requests.RequestException: For issues related to the HTTP request, such
+                                   as connectivity problems or timeout.
+        ValueError: For any unexpected errors during the execution of this
+        function.
+
+    Notes:
+        This function is part of a module that contains functions to fetch the
+        latest release information for specified products from different types
+        of repositories and registries.
+    """
+    config = importlib.import_module('config')
+    config.logger.debug('fetch_mcp called with configuration: %s',
+                        product_config)
+
+    repository = product_config.get('repository')
+    channel = product_config.get('channel')
+
+    url = f"{repository}/{channel}"
+    config.logger.debug('Constructed URL: %s', url)
+
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+
+        config.logger.debug('HTTP response status: %s', response.status_code)
+        config.logger.debug('HTTP response text: %s', response.text)
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        page_text = soup.get_text()
+
+        releases = fetch_mcp_product_releases(page_text)
+
+        config.logger.debug('Parsed releases: %s', releases)
+        return releases
+
+    except requests.RequestException as request_exception:
+        config.logger.error('HTTP request failed: %s', request_exception)
+        return []
+    except ValueError as value_error:
+        config.logger.error("An unexpected error occurred: %s", value_error)
+        return []
+
+
 def fetch_mke(product_config):
     """
     Fetches the latest release information for the specified MKE product from

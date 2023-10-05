@@ -143,6 +143,12 @@ def test_update_cache(mock_get_release, mock_cache):
                                    # reference may not be easily available
         }),
         call({
+            'product': 'mcp',
+            'repository': 'https://mirror.mirantis.com',
+            'channel': 'update',
+            'fetch_function': ANY 
+        }),        
+        call({
             'product': 'mke',
             'repository': 'mirantis/ucp',
             'registry': 'https://hub.docker.com',
@@ -179,6 +185,8 @@ def test_update_cache(mock_get_release, mock_cache):
     # Assert that the cache was updated with the expected data using set method
     calls_set = [
         call('mcr_https://repos.mirantis.com_stable_docker',
+             ('1.0.0', '2023-10-01T12:00:00Z')),
+        call('mcp_https://mirror.mirantis.com_update',
              ('1.0.0', '2023-10-01T12:00:00Z')),
         call('mke_mirantis/ucp_https://hub.docker.com',
              ('1.0.0', '2023-10-01T12:00:00Z')),
@@ -224,6 +232,8 @@ def test_scheduled_update(mock_cache, mock_dt_now):
     # Define the expected cache keys and associated values
     expected_calls = [
         call('mcr_https://repos.mirantis.com_stable_docker',
+             ('1.1.0', '2023-10-02T12:00:00Z')),
+        call('mcp_https://mirror.mirantis.com_update',
              ('1.1.0', '2023-10-02T12:00:00Z')),
         call('mke_mirantis/ucp_https://hub.docker.com',
              ('1.1.0', '2023-10-02T12:00:00Z')),

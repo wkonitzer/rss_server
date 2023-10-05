@@ -21,6 +21,11 @@ spec:
       containers:
       - name: rss-server
         image: msr2.konitzer.dev/wkonitzer/rss_server:latest
+        env:
+#        - name: LOGGING_LEVEL
+#          value: "DEBUG"  
+#        - name: FLASK_DEBUG
+#          value: "True"        
         ports:
         - containerPort: 4000
         resources:

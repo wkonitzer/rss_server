@@ -20,11 +20,19 @@ def generate_product_link(product, version):
     major_minor = '.'.join(version.split('.')[:2])
 
     if product['product'] == 'mcc':
-        # Define link format for 'mcc'
         return (
             f"https://docs.mirantis.com/container-cloud/latest/"
             f"release-notes/releases/{version.replace('.', '-')}.html"
         )
+
+    if product['product'] == 'mcp':
+        # Extract the final part of the version
+        last_part = version.split('.')[-1]
+        
+        return (
+            f"https://docs.mirantis.com/mcp/q4-18/mcp-release-notes/mu/"
+            f"mu-{last_part}.html"
+        )        
 
     if product['product'] == 'mosk':
         version_parts = version.split('.')
