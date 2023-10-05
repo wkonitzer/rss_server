@@ -708,12 +708,14 @@ def fetch_k0s(product_config):
 
             # Extract datetime value from the HTML content
             soup = BeautifulSoup(response.content, 'html.parser')
-            datetime_element = soup.find('relative-time', attrs={"datetime": True})
+            datetime_element = soup.find('relative-time',
+                                         attrs={"datetime": True})
 
             if datetime_element:
                 datetime_str = datetime_element['datetime']
                 release_datetime = datetime.fromisoformat(datetime_str)
-                naive_datetime = release_datetime.astimezone().replace(tzinfo=None)
+                naive_datetime = release_datetime.astimezone()
+                naive_datetime = naive_datetime.replace(tzinfo=None)
                 config.logger.debug("Release date for version %s: %s",
                                    version, naive_datetime)
                 releases.append({'name': version, 'date': naive_datetime})
