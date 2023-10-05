@@ -36,8 +36,8 @@ def generate_product_link(product, version):
             f"release-notes/{series_format}-series/"
             f"{version_format}.html"
         )
-    else:
-        # Default link format (which was already there for other products)
-        return (f"https://docs.mirantis.com/{product['product']}/"
-                f"{major_minor}/release-notes/"
-                f"{version.replace('.', '-')}.html")
+
+    # Default link format (which was already there for other products)
+    return (f"https://docs.mirantis.com/{product['product']}/"
+            f"{major_minor}/release-notes/"
+            f"{version.replace('.', '-')}.html")
