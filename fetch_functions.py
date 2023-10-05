@@ -713,15 +713,30 @@ def fetch_k0s(product_config):
 
             if datetime_element:
                 datetime_str = datetime_element['datetime']
-                release_datetime = datetime.fromisoformat(datetime_str)
-                naive_datetime = release_datetime.astimezone()
-                naive_datetime = naive_datetime.replace(tzinfo=None)
-                config.logger.debug("Release date for version %s: %s",
-                                   version, naive_datetime)
-                releases.append({'name': version, 'date': naive_datetime})
-            else:
-                config.logger.error("Couldn't extract datetime for version %s",
-                               version)
+                config.logger.debug("Found datetime string: %s", datetime_str)
+
+                try:
+                    # Replace 'Z' with '+00:00' for UTC timezone representation
+                    datetime_str = datetime_str.replace('Z', '+00:00')
+
+                    release_datetime = datetime.fromisoformat(datetime_str)
+                    config.logger.debug(
+                        "Parsed datetime string to datetime object: %s",
+                         release_datetime
+                    )
+
+                    naive_datetime = release_datetime.astimezone()
+                    config.logger.debug("Converted to system timezone: %s",
+                                        naive_datetime)
+
+                    naive_datetime = naive_datetime.replace(tzinfo=None)
+                    config.logger.debug("Removed timezone info: %s",
+                                        naive_datetime)
+
+                    releases.append({'name': version, 'date': naive_datetime})
+                except Exception as error:
+                    config.logger.error("Error while processing datetime: %s",
+                                        error)
         else:
             config.logger.error("Couldn't extract version from the URL")
 
