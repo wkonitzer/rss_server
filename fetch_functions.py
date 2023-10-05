@@ -145,10 +145,10 @@ def fetch_mcp_product_releases(response_content):
                     - 'date': The release date as a datetime object.
                     If no release information is found, the list will be empty.
     """
-    
+
     # Regular expression to match the provided format
     regex_pattern = r"(\d+\.\d+\.\d+)/\s+(\d+-\w+-\d+)\s+(\d+:\d+)"
-    
+
     matches = re.findall(regex_pattern, response_content)
 
     releases = []
@@ -161,9 +161,9 @@ def fetch_mcp_product_releases(response_content):
         release_date_str = f"{date} {time}"
         release_datetime = datetime.strptime(release_date_str,
                                              "%d-%b-%Y %H:%M")
-        
+
         releases.append({'name': version, 'date': release_datetime})
-        
+
     return releases
 
 

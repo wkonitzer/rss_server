@@ -147,7 +147,7 @@ def test_update_cache(mock_get_release, mock_cache):
             'repository': 'https://mirror.mirantis.com',
             'channel': 'update',
             'fetch_function': ANY 
-        }),        
+        }),
         call({
             'product': 'mke',
             'repository': 'mirantis/ucp',

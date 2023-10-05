@@ -29,12 +29,12 @@ import os
 import logging
 
 from fetch_functions import (
-    fetch_mcr, 
-    fetch_mke, 
-    fetch_msr, 
-    fetch_mcc, 
-    fetch_mosk, 
-    fetch_k0s, 
+    fetch_mcr,
+    fetch_mke,
+    fetch_msr,
+    fetch_mcc,
+    fetch_mosk,
+    fetch_k0s,
     fetch_mcp
 )
 
@@ -80,7 +80,7 @@ PRODUCTS = [
         'repository': 'https://mirror.mirantis.com',
         'channel': 'update',
         'fetch_function': fetch_mcp
-    },    
+    },
     {
         'product': 'mke',
         'repository': 'mirantis/ucp',
