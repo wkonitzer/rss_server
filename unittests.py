@@ -171,7 +171,7 @@ def test_update_cache(mock_get_release, mock_cache):
             'product': 'k0s',
             'url': 'https://github.com/k0sproject/k0s/releases/latest',
             'fetch_function': ANY
-        }),        
+        }),
     ]
     mock_get_release.assert_has_calls(
         calls_get_latest_release, any_order=True)

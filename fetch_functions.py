@@ -687,24 +687,45 @@ def fetch_k0s(product_config):
     Raises:
         Requests exceptions for network-related issues.
     """
-    config = importlib.import_module('config')
-    url = product_config.get('url')
-    response = requests.get(url, allow_redirects=True)
     releases = []
 
-    # Extract version from the URL
-    version_match = re.search(r'/releases/tag/v([\d.]+)', response.url)
-    if version_match:
-        version = version_match.group(1)
+    try:
+        config = importlib.import_module('config')
+        url = product_config.get('url')
+        config.logger.debug("Fetching release information from: %s", url)
 
-        # Extract datetime value from the HTML content
-        soup = BeautifulSoup(response.content, 'html.parser')
-        datetime_element = soup.find('relative-time', attrs={"datetime": True})
+        response = requests.get(url, timeout=5, allow_redirects=True)
+        if response.status_code != 200:
+            config.logger.warning("Request to %s returned status code: %s",
+                                  url, response.status_code)
+            return []
 
-        if datetime_element:
-            datetime_str = datetime_element['datetime']
-            release_datetime = datetime.fromisoformat(datetime_str)
-            naive_datetime = release_datetime.astimezone().replace(tzinfo=None)
-            releases.append({'name': version, 'date': naive_datetime})
+        # Extract version from the URL
+        version_match = re.search(r'/releases/tag/v([\d.]+)', response.url)
+        if version_match:
+            version = version_match.group(1)
+            config.logger.debug("Found version: %s", version)
+
+            # Extract datetime value from the HTML content
+            soup = BeautifulSoup(response.content, 'html.parser')
+            datetime_element = soup.find('relative-time', attrs={"datetime": True})
+
+            if datetime_element:
+                datetime_str = datetime_element['datetime']
+                release_datetime = datetime.fromisoformat(datetime_str)
+                naive_datetime = release_datetime.astimezone().replace(tzinfo=None)
+                config.logger.debug("Release date for version %s: %s",
+                                   version, naive_datetime)
+                releases.append({'name': version, 'date': naive_datetime})
+            else:
+                config.logger.error("Couldn't extract datetime for version %s",
+                               version)
+        else:
+            config.logger.error("Couldn't extract version from the URL")
+
+    except requests.RequestException as error:
+        config.logger.error("Error fetching data from GitHub: %s", error)
+    except Exception as error:
+        config.logger.error("An unexpected error occurred: %s", error)
 
     return releases

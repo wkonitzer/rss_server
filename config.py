@@ -96,7 +96,7 @@ PRODUCTS = [
         'product': 'k0s',
         'url': 'https://github.com/k0sproject/k0s/releases/latest',
         'fetch_function': fetch_k0s
-    },    
+    },
 ]
 
 # Cache expiration time in seconds
