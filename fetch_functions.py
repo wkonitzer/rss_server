@@ -10,6 +10,7 @@ import importlib
 import requests
 import yaml
 from bs4 import BeautifulSoup
+from packaging.version import Version
 
 def construct_url(repository, channel):
     """
@@ -348,3 +349,314 @@ def parse_msr_releases(data, branch):
             and release['name'].split('.')[1] == str(minor)
         ]
     return releases
+
+def date_from_human_string(date_str):
+    """
+    Convert a human-readable date string into a datetime object.
+
+    The input date string should be in the format "Month Day Year", e.g.,
+    "Jan 1 2020".
+    
+    Parameters:
+    - date_str (str): A date string in the format "Month Day Year".
+    
+    Returns:
+    - datetime.datetime: A datetime object representing the given date.
+    
+    Raises:
+    - ValueError: If the month in date_str is not recognized.
+    """
+    month_to_number = {
+        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+        'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+    }
+
+    month_str, day_str, year_str = date_str.split()
+    return datetime(int(year_str), month_to_number[month_str], int(day_str))
+
+def fetch_bucket_url_from_response(response):
+    """
+    Extract the bucket URL from a given HTTP response.
+
+    The function parses the provided response to search for a BUCKET_URL
+    pattern. It looks for the BUCKET_URL within a script tag in the HTML
+    content of the response. If the bucket URL does not start with 'http', it
+    prepends 'https:' to it.
+
+    Parameters:
+    - response (requests.Response): The HTTP response object to extract the
+    bucket URL from.
+
+    Returns:
+    - str or None: Returns the extracted bucket URL as a string if found;
+    otherwise, returns None.
+    """
+    soup = BeautifulSoup(response.text, 'html.parser')
+    bucket_url_element = soup.find("script",
+                          text=re.compile(r'BUCKET_URL\s*=\s*["\'](.*?)["\']'))
+
+    if not bucket_url_element:
+        return None
+
+    match = re.search(r'BUCKET_URL\s*=\s*["\'](.*?)["\']',
+                      bucket_url_element.string)
+    if not match:
+        return None
+
+    bucket_url = match.group(1)
+    if not bucket_url.startswith("http"):
+        bucket_url = "https:" + bucket_url
+
+    return bucket_url
+
+def fetch_releases_from_bucket(bucket_url_with_prefix):
+    """
+    Fetch the release versions and their dates from a specified bucket URL
+    with prefix.
+
+    The function sends a GET request to the provided bucket URL to retrieve
+    the XML content. It then parses this content to extract information about
+    the releases present, specifically their names (versions) and the last
+    modified dates.
+
+    Parameters:
+    - bucket_url_with_prefix (str): The bucket URL appended with the desired
+      prefix which defines the path to the releases.
+
+    Returns:
+    - list: A list of dictionaries where each dictionary represents a release
+      with its name (version) and last modified date. An example element of the
+      list:
+      {'name': '1.2.3', 'date': datetime.datetime(2022, 1, 1, 12, 0, 0)}
+
+    Raises:
+    - requests.HTTPError: If there's an issue with the request to the bucket
+      URL.
+    """
+    response = requests.get(bucket_url_with_prefix)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, 'xml')
+    contents = soup.find_all("Contents")
+
+    releases = []
+    for content in contents:
+        key_tag = content.find("Key")
+        date_tag = content.find("LastModified")
+
+        if key_tag and date_tag:
+            key_parts = key_tag.text.split('/')
+            if len(key_parts) == 3: 
+                version = key_parts[2].replace('.yaml', '')
+                date_str = date_tag.text
+                try:
+                    date_object = datetime.strptime(date_str,
+                                                    '%Y-%m-%dT%H:%M:%S.%fZ')
+                    releases.append({'name': version, 'date': date_object})
+                except ValueError:
+                    config.logger.error("Error parsing date string: %s",
+                                        date_str)
+
+    return releases
+
+def fetch_product(product_config, product_name, post_process_func=None):
+    """
+    Fetch the releases for a specified product from a given URL and optionally
+    post-process the results.
+
+    The function retrieves the bucket URL from the product page's response and
+    then fetches the releases from the bucket URL with a specific prefix. If a
+    post-processing function is provided, it is used to further process or
+    filter the fetched releases.
+
+    Parameters:
+    - product_config (dict): A configuration dictionary specific to the
+      product. It must contain keys 'url' and 'prefix'.
+      Example:
+        {
+            'url': 'https://example.com/product',
+            'prefix': 'releases/product/'
+        }
+    
+    - product_name (str): The name of the product being fetched. Used for
+      logging purposes.
+
+    - post_process_func (callable, optional): A function to post-process the
+      fetched releases. If provided, it should take three arguments: the list
+      of fetched releases, the bucket URL, and the prefix. It should return a
+      list of post-processed releases.
+
+    Returns:
+    - list: A list of dictionaries where each dictionary represents a release
+      with its name (version) and last modified date. Example element of the list:
+      {'name': '1.2.3', 'date': datetime.datetime(2022, 1, 1, 12, 0, 0)}
+
+    Raises:
+    - requests.HTTPError: If there's an issue with the request to the product
+      URL.
+
+    Notes:
+    - Uses two helper functions: fetch_bucket_url_from_response and
+      fetch_releases_from_bucket.
+    """
+    config = importlib.import_module('config')
+    url = product_config.get('url')
+    prefix = product_config.get('prefix')
+    
+    config.logger.debug(f'fetch_{product_name} called. Target URL: {url}')
+
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        config.logger.debug("First 500 characters of response:\n%s",
+                            response.text[:500])
+
+        bucket_url = fetch_bucket_url_from_response(response)
+        if not bucket_url:
+            config.logger.error("Unable to extract BUCKET_URL.")
+            return []
+
+        bucket_url_with_prefix = bucket_url + "/?prefix=" + prefix
+        releases = fetch_releases_from_bucket(bucket_url_with_prefix)
+
+        if post_process_func:
+            releases = post_process_func(releases, bucket_url, prefix)
+
+        return releases
+
+    except requests.RequestException as e:
+        config.logger.error(f"Error fetching {product_name} releases: %s", e)
+        return []
+
+def fetch_mcc(product_config):
+    """
+    Fetch the releases for the 'mcc' product using the given product
+    configuration.
+
+    This is a wrapper function that delegates the fetching process to the
+    fetch_product function for the 'mcc' product.
+
+    Parameters:
+    - product_config (dict): A configuration dictionary specific to the 'mcc'
+      product. It should contain keys 'url' and 'prefix'.
+      Example:
+        {
+            'url': 'https://example.com/mcc',
+            'prefix': 'releases/mcc/'
+        }
+
+    Returns:
+    - list: A list of dictionaries where each dictionary represents a release
+      with its name (version) and last modified date. Example element of the
+      list:
+      {'name': '1.2.3', 'date': datetime.datetime(2022, 1, 1, 12, 0, 0)}
+    """
+    return fetch_product(product_config, 'mcc')
+
+def fetch_mosk(product_config):
+    """
+    Fetch the releases for the 'mosk' product using the given product
+    configuration.
+
+    This function additionally uses the post_process_mosk function to
+    post-process the fetched releases for the 'mosk' product. It's a
+    specialized wrapper for the fetch_product function.
+
+    Parameters:
+    - product_config (dict): A configuration dictionary specific to the 'mosk'
+      product. It should contain keys 'url' and 'prefix'.
+      Example:
+        {
+            'url': 'https://example.com/mosk',
+            'prefix': 'releases/mosk/'
+        }
+
+    Returns:
+    - list: A list of dictionaries where each dictionary represents a release
+      with its name (version) and last modified date. Example element of the
+      list:
+      {'name': '1.2.3', 'date': datetime.datetime(2022, 1, 1, 12, 0, 0)}
+    """
+    return fetch_product(product_config, 'mosk', post_process_mosk)
+
+def post_process_mosk(releases, bucket_url, prefix):
+    """
+    Post-process the fetched MOSK releases to find and extract the latest
+    release containing 'openstack'.
+
+    This function filters out versions with hyphens, sorts the remaining
+    releases by date and version, and then scans each release's content for the
+    presence of "openstack". If found, it extracts and returns the version
+    details of the latest such release.
+
+    Parameters:
+    - releases (list): A list of dictionaries where each dictionary represents
+      a release with its name (version) and last modified date. Example:
+      [{'name': '1.2.3', 'date': datetime.datetime(2022, 1, 1, 12, 0, 0)}]
+
+    - bucket_url (str): The base URL of the bucket from which releases are
+      fetched.
+
+    - prefix (str): The prefix to append to the bucket URL to construct the
+      complete URL to fetch releases.
+
+    Returns:
+    - list: A list containing a single dictionary for the latest release with
+      its name (version) and date that 
+      contains "openstack" in its content. If no such release is found, an
+      empty list is returned. 
+      Example return value:
+      [{'name': '4.5.6', 'date': datetime.datetime(2022, 1, 1, 12, 0, 0)}]
+
+    Notes:
+    - Logging is performed throughout the function for debugging purposes
+      using a logger from the imported 'config' module.
+    """    
+    config = importlib.import_module('config')
+
+    # Filter out versions with hyphens
+    releases = [release for release in releases if '-' not in release['name']]
+
+    # Sort the releases based on the date and if dates are the same, then based
+    # on the version.
+    sorted_releases = sorted(releases, key=lambda x: (x['date'],
+                             Version(x['name'])), reverse=True)
+
+    for release in sorted_releases:
+        latest_release_url = f"{bucket_url}/{prefix}{release['name']}.yaml"
+        release_content = requests.get(latest_release_url).text
+
+        snippet_start = max(release_content.lower().find("openstack") - 20, 0)
+        snippet_end = min(release_content.lower().find("openstack") + 28,
+                          len(release_content))
+        config.logger.debug("Content Snippet around 'openstack': %s",
+                            release_content[snippet_start:snippet_end])
+            
+        # Check for the presence of "openstack"
+        if re.search(r'\bopenstack\b', release_content, re.IGNORECASE):
+            # Now you have the latest_release with "openstack" in its content
+            latest_release = release
+            break
+    else:
+        # If the loop completed without breaking (i.e., "openstack" not found
+        # in any release)
+        config.logger.error("No release containing 'openstack' was found.")
+        return []
+
+    # Now, we need to get the content of this latest release and parse it
+    latest_release_url = (f"{bucket_url}/releases/cluster/"
+                          f"{latest_release['name']}.yaml")
+    release_content = requests.get(latest_release_url).text
+        
+    # Parsing the version from the release content
+    match = re.search(r'version:\s*(\d+\.\d+\.\d+)\+(\d+\.\d+\.\d+)',
+                      release_content)
+    if match:
+        version_prefix = match.group(1)
+        version_suffix = match.group(2)
+        config.logger.debug("Extracted version prefix: %s", version_prefix)
+        config.logger.debug("Extracted version suffix: %s", version_suffix)
+        return [{'name': version_suffix, 'date': latest_release['date']}]
+    else:
+        config.logger.error("Version not found in the release content.")
+        return []    

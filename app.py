@@ -26,6 +26,7 @@ import feedgenerator
 
 from get_latest_release import get_latest_release
 import config
+from product_utils import generate_product_link
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -114,7 +115,8 @@ def update_cache():
         # Determine the available keys in the product dictionary
         available_keys = [key for key in ['product', 'repository',
                                           'channel', 'component', 'registry',
-                                          'branch'] if key in product]
+                                          'branch', 'url',
+                                          'prefix'] if key in product]
 
         # Construct the cache key based on the available keys
         key_parts = [product[key] for key in available_keys]
@@ -198,7 +200,8 @@ def rss_feed():
         # Determine the available keys in the product dictionary
         available_keys = [key for key in ['product', 'repository',
                                           'channel', 'component', 'registry',
-                                          'branch'] if key in product]
+                                          'branch', 'url',
+                                          'prefix'] if key in product]
 
         # Construct the cache key based on the available keys
         key_parts = [product[key] for key in available_keys]
@@ -229,10 +232,7 @@ def rss_feed():
             release_date = dt.fromisoformat(release_date.rstrip('Z'))
 
         major_minor = '.'.join(version.split('.')[:2])
-        link = (
-            f"https://docs.mirantis.com/{product['product']}/"
-            f"{major_minor}/release-notes/{version.replace('.', '-')}.html"
-        )
+        link = generate_product_link(product, version)
         description = (
             f'<a href="{link}">Release notes for '
             f'{product["product"].upper()} {version}</a>'

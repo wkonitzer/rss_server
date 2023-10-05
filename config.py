@@ -28,7 +28,7 @@ PRODUCTS = [
 import os
 import logging
 
-from fetch_functions import fetch_mcr, fetch_mke, fetch_msr
+from fetch_functions import fetch_mcr, fetch_mke, fetch_msr, fetch_mcc, fetch_mosk
 
 
 # Get logging level from environment variable. If not set, default to INFO
@@ -36,9 +36,6 @@ LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO')
 
 # Convert string level to logging level
 LOGGING_LEVEL = getattr(logging, LOGGING_LEVEL.upper(), logging.INFO)
-
-# Define a constant for the logging level.
-LOGGING_LEVEL = logging.INFO  # Change to desired logging level
 
 # Configure the root logger.
 logging.basicConfig(level=LOGGING_LEVEL)
@@ -83,6 +80,18 @@ PRODUCTS = [
         'branch': '3.1',
         'fetch_function': fetch_msr
     },
+    {
+        'product': 'mcc',
+        'url': 'https://binary.mirantis.com',
+        'prefix': 'releases/kaas/',
+        'fetch_function': fetch_mcc
+    },
+    {
+        'product': 'mosk',
+        'url': 'https://binary.mirantis.com',
+        'prefix': 'releases/cluster/',
+        'fetch_function': fetch_mosk
+    },         
 ]
 
 # Cache expiration time in seconds
