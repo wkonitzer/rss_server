@@ -734,7 +734,7 @@ def fetch_k0s(product_config):
                                         naive_datetime)
 
                     releases.append({'name': version, 'date': naive_datetime})
-                except Exception as error:
+                except ValueError as error:
                     config.logger.error("Error while processing datetime: %s",
                                         error)
         else:
