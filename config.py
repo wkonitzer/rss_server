@@ -116,7 +116,7 @@ PRODUCTS = [
         'product': 'lens',
         'url': 'https://api.k8slens.dev/binaries/latest.json',
         'fetch_function': fetch_lens
-    },    
+    },
 ]
 
 # Cache expiration time in seconds

@@ -276,7 +276,7 @@ def rss_feed():
         if not link:
             link = generate_product_link(product, version)
             release_cache.set_link(product, version, link)
-        
+
         description = (
             f'<a href="{link}">Release notes for '
             f'{product["product"].upper()} {version}</a>'

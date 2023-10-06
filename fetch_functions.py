@@ -903,7 +903,7 @@ def fetch_lens(product_config):
 
     try:
         version_str = data.get('version')
-        
+
         # Strip "-latest" from the end of the version string
         version_str = version_str.replace("-latest", "")
 
