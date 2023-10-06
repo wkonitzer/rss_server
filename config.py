@@ -42,24 +42,15 @@ from fetch_functions import (
 
 # Get logging level from environment variable. If not set, default to INFO
 LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO')
-
-# Convert string level to logging level
 LOGGING_LEVEL = getattr(logging, LOGGING_LEVEL.upper(), logging.INFO)
 
-# Configure the root logger.
-logging.basicConfig(level=LOGGING_LEVEL)
-
-# If you want a specific logger configuration for a module, you can do it here.
-# Using __name__ would be more dynamic and can adapt to different modules
 logger = logging.getLogger(__name__)
 logger.setLevel(LOGGING_LEVEL)
 
-# Adding a console handler explicitly (optional, but helpful if the
-# basicConfig is not working as expected)
 console_handler = logging.StreamHandler()
 console_handler.setLevel(LOGGING_LEVEL)
 formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    '%(threadName)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 console_handler.setFormatter(formatter)
 
