@@ -853,3 +853,85 @@ def fetch_k0s(product_config):
         config.logger.error("Error fetching data from GitHub: %s", error)
 
     return releases
+
+
+def fetch_lens(product_config):
+    """
+    Fetches the latest release information for the Lens product from a given
+    URL.
+
+    The function retrieves release information, including the version and
+    release date, from a specified JSON endpoint. It then processes the
+    received data, removing the '-latest' suffix from the version and
+    converting the release date into a datetime object in the system's local
+    timezone.
+
+    Args:
+        product_config (dict): A dictionary containing configuration details 
+                               for the product, specifically the 'url' key to 
+                               denote where to fetch the release information
+                               from.
+
+    Returns:
+        list[dict]: A list containing a single dictionary with keys:
+                    - 'name': The version of the product release.
+                    - 'date': The release date as a datetime object.
+                    If no valid release information is found or there's an
+                    error in processing the response, an empty list is
+                    returned.
+
+    Logs:
+        Various debug, warning, and error messages to give insights about the 
+        status of the operation and any potential issues encountered.
+    """
+    config = importlib.import_module('config')
+    url = product_config.get('url')
+    config.logger.debug("Fetching release information from: %s", url)
+
+    # Fetch the content of the URL
+    response = requests.get(url, timeout=5)
+    if response.status_code != 200:
+        config.logger.warning("Received a non-200 status code: %d",
+                              response.status_code)
+        return []
+
+    try:
+        data = response.json()
+    except ValueError:
+        config.logger.error("Invalid JSON response received.")
+        return []
+
+    try:
+        version_str = data.get('version')
+        
+        # Strip "-latest" from the end of the version string
+        version_str = version_str.replace("-latest", "")
+
+        release_date_str = data.get('releaseDate')
+
+        # Convert the date string to a datetime object
+        release_date = datetime.fromisoformat(
+                                release_date_str.replace("Z", "+00:00"))
+
+        naive_datetime = release_date.astimezone()
+        config.logger.debug("Converted to system timezone: %s",
+                            naive_datetime)
+
+        naive_datetime = naive_datetime.replace(tzinfo=None)
+        config.logger.debug("Removed timezone info: %s",
+                            naive_datetime)
+
+        # Construct the result dictionary
+        result = {
+            'name': version_str,
+            'date': naive_datetime
+        }
+
+        config.logger.debug("Extracted version: %s and date: %s",
+                            result['name'], result['date'])
+        return [result]
+
+    except (TypeError, ValueError):
+        config.logger.error("Error extracting or converting"
+                            " version or release date.")
+        return []

@@ -35,7 +35,8 @@ from fetch_functions import (
     fetch_mcc,
     fetch_mosk,
     fetch_k0s,
-    fetch_mcp
+    fetch_mcp,
+    fetch_lens
 )
 
 
@@ -111,6 +112,11 @@ PRODUCTS = [
         'url': 'https://github.com/k0sproject/k0s/releases/latest',
         'fetch_function': fetch_k0s
     },
+    {
+        'product': 'lens',
+        'url': 'https://api.k8slens.dev/binaries/latest.json',
+        'fetch_function': fetch_lens
+    },    
 ]
 
 # Cache expiration time in seconds

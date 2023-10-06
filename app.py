@@ -79,6 +79,43 @@ class SimpleCache:
         """
         self.cache[key] = (time.time(), value)
 
+    def get_link(self, product, version):
+        """
+        Retrieves the cached link for a given product and its version.
+
+        This method constructs a unique key based on the product's name 
+        and its version to fetch the link from the cache.
+
+        Parameters:
+            product (dict): A dictionary containing product details.
+                            The 'product' key holds the name of the product.
+            version (str): The version of the product for which the link is to
+                           be retrieved.
+
+        Returns:
+            str or None: The cached link if it exists, otherwise None.
+        """
+        key = f"link_{product['product']}_{version}"
+        return self.get(key)
+
+    def set_link(self, product, version, link):
+        """
+        Stores the provided link in the cache for a given product and its
+        version.
+
+        This method constructs a unique key based on the product's name
+        and its version to store the link in the cache.
+
+        Parameters:
+            product (dict): A dictionary containing product details.
+                            The 'product' key holds the name of the product.
+            version (str): The version of the product for which the link is to
+                           be stored.
+            link (str): The link to be stored in the cache.
+        """
+        key = f"link_{product['product']}_{version}"
+        self.set(key, link)
+
 
 release_cache = SimpleCache(timeout=config.CACHE_TIMEOUT)
 
@@ -87,38 +124,36 @@ products = config.PRODUCTS
 
 def update_cache():
     """
-    Updates the cache with the latest release info for each product.
-    This function is intended to be run as a scheduled job.
+    Updates the cache with the latest release info and associated links for
+    each product.
+    
+    This function fetches the latest release information for each product,
+    caches this data, and also caches the link to the product's release notes
+    or webpage. This is intended to optimize retrieval times and minimize
+    redundant operations when serving the RSS feed. This function is meant to
+    be run as a scheduled job to keep the cache up-to-date.
+    
+    Note:
+    This function is parallelized for efficiency using a thread pool.
     """
     logging.info('Starting cache update...')
 
     def fetch_and_cache(product):
         """
-        Fetches the latest release information for a given product and updates
-        the cache.
-        
-        This function constructs a key from the available fields in the product
-        dictionary, fetches the latest release information for the constructed
-        key, and updates the cache with the fetched information.
+        Fetches the latest release information for a given product, updates
+        the cache with the release information, and caches the link to the 
+        product's release notes or webpage.
         
         Parameters:
         product (dict): A dictionary containing the details of the product for
                         which the latest release information needs to be
-                        fetched and cached. The dictionary may contain fields
-                        like 'product', 'repository', 'channel', 'component',
-                        'registry', and 'branch'.
-        
-        Note:
-        This function is intended to be used as a worker function with
-        concurrent.futures.ThreadPoolExecutor for parallel execution.
+                        fetched.
         """
-        # Determine the available keys in the product dictionary
+        # Determine cache key for release info
         available_keys = [key for key in ['product', 'repository',
                                           'channel', 'component', 'registry',
-                                          'branch', 'url',
-                                          'prefix'] if key in product]
-
-        # Construct the cache key based on the available keys
+                                          'branch', 'url', 'prefix'] 
+                          if key in product]
         key_parts = [product[key] for key in available_keys]
         key = '_'.join(key_parts)
 
@@ -126,6 +161,12 @@ def update_cache():
         release_info = get_latest_release(product)
         release_cache.set(key, release_info)
         logging.info('Cache updated for product: %s', product["product"])
+
+        # If the release info is valid, cache the product link
+        if release_info and len(release_info) > 1:
+            version, _ = release_info
+            link = generate_product_link(product, version)
+            release_cache.set_link(product, version, link)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(fetch_and_cache, products)
@@ -231,7 +272,11 @@ def rss_feed():
         if isinstance(release_date, str):
             release_date = dt.fromisoformat(release_date.rstrip('Z'))
 
-        link = generate_product_link(product, version)
+        link = release_cache.get_link(product, version)
+        if not link:
+            link = generate_product_link(product, version)
+            release_cache.set_link(product, version, link)
+        
         description = (
             f'<a href="{link}">Release notes for '
             f'{product["product"].upper()} {version}</a>'
