@@ -12,8 +12,8 @@ Fixtures:
 - `mock_requests_get`: Patches the `requests.get` function to return a mock
   response, thus avoiding actual HTTP requests during tests.
 """
-import pytest
 from unittest.mock import patch, MagicMock
+import pytest
 
 
 @pytest.fixture(scope="session", autouse=True)
