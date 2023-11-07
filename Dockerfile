@@ -21,4 +21,4 @@ COPY product_utils.py ./product_utils.py
 EXPOSE 4000
 
 # Run app.py when the container launches
-CMD ["gunicorn", "-b", "0.0.0.0:4000", "app:app", "--access-logfile", "-", "--access-logformat", "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -"]
+CMD ["gunicorn", "--preload", "-w", "1", "-b", "0.0.0.0:4000", "app:app", "--access-logfile", "-", "--access-logformat", "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -"]

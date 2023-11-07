@@ -313,7 +313,7 @@ def health_check():
     return 'OK', 200
 
 
-def run_app():
+def initialize_app():
     """
     Start the Flask application along with a background scheduler.
 
@@ -332,23 +332,14 @@ def run_app():
           intervals.
         - Logs the initiation of cache updating and the Flask application
           start.
-        - Starts the Flask application server which will run indefinitely until
-          stopped.
-        - Logs when the Flask application is stopped.
 
     Environment Variables:
         FLASK_DEBUG: If set to 'true', runs the application in debug mode.
                      Default is 'false'.
 
     Configuration Variables:
-        - HOST: The host address on which the Flask application will listen.
-        - PORT: The port number on which the Flask application will listen.
         - SCHEDULER_INTERVAL: The interval in hours for the scheduler to update
                               the cache.
-
-    Note:
-        This function is intended to be the entry point of the application. It
-        should be called if the script is run as the main module.
     """
     update_cache()
     scheduler = BackgroundScheduler()
@@ -360,11 +351,46 @@ def run_app():
     )
     scheduler.start()
 
-    # Start the Flask application
+
+def run_app():
+    """
+    Launch the Flask application with the configuration specified in the
+    `config` module.
+
+    This function starts the Flask web server with the host and port as defined
+    in the application's configuration. It checks the `FLASK_DEBUG` environment
+    variable to determine if the application should be started in debug mode.
+
+    Debug mode allows for automatic reloading of the application upon detecting
+    changes in the code and provides a debugger if an exception is raised.
+    However, it should not be used in a production environment due to the
+    performance overhead and potential security risks.
+
+    The function logs the start and stop of the application to provide feedback
+    in the console regarding the state of the application server.
+
+    Environment Variables:
+        FLASK_DEBUG: If set to 'true', runs the application in debug mode which
+                     enables a debugger and auto-reloading. Default is 'false'.
+
+    Side Effects:
+        - Starts the Flask application server.
+        - Logs the start and stop of the application server to the console.
+
+    Returns:
+        None
+    """
     logging.info('Starting application...')
     is_debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(host=config.HOST, port=config.PORT, debug=is_debug_mode)
     logging.info('Application stopped.')
 
+
+# Set the RUN_INITIALIZE environment variable to "false" when running tests
+if os.environ.get('RUN_INITIALIZE', 'true').lower() == 'true':
+    initialize_app()
+
+
 if __name__ == '__main__':
+    initialize_app()
     run_app()

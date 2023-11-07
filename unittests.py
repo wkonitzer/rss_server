@@ -5,9 +5,13 @@ This module contains unit tests for verifying the functionality of the app.
 from datetime import datetime
 from unittest.mock import patch, Mock, MagicMock, call, ANY
 import logging
-
+import os
 import pytest
 
+# Set env variables for testing
+os.environ['RUN_INITIALIZE'] = 'false'
+
+# pylint: disable=wrong-import-position
 from app import app, update_cache, rss_feed
 
 # Configure logging for tests
