@@ -111,11 +111,11 @@ PRODUCTS = [
 ]
 
 # Cache expiration time in seconds
-CACHE_TIMEOUT = int(os.environ.get('CACHE_TIMEOUT', 86400))  # 24 hours
+CACHE_TIMEOUT = int(os.environ.get('CACHE_TIMEOUT', 18000))  # 5 hours
 
 # Port and host settings
 PORT = int(os.environ.get('PORT', 4000))
 HOST = os.environ.get('HOST', '0.0.0.0')
 
 # Scheduler interval in hours
-SCHEDULER_INTERVAL = int(os.environ.get('SCHEDULER_INTERVAL', 12))
+SCHEDULER_INTERVAL = int(os.environ.get('SCHEDULER_INTERVAL', 4))
