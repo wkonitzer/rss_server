@@ -758,11 +758,16 @@ def post_process_mosk(releases, bucket_url, prefix):
     # Now, we need to get the content of this latest release and parse it
     latest_release_url = (f"{bucket_url}/releases/cluster/"
                           f"{latest_release['name']}.yaml")
+    config.logger.debug("Release url: %s", latest_release_url)
     release_content = requests.get(latest_release_url, timeout=5).text
 
     # Parsing the version from the release content
-    match = re.search(r'version:\s*(\d+\.\d+\.\d+)\+(\d+\.\d+\.\d+)',
-                      release_content)
+    match = re.search(
+        (r'version:\s*'
+         r'(\d+\.\d+\.\d+|\d+\.\d+)\+'
+         r'(\d+\.\d+\.\d+|\d+\.\d+)'),
+        release_content
+    )
     if match:
         version_prefix = match.group(1)
         version_suffix = match.group(2)

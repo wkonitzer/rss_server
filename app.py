@@ -313,18 +313,58 @@ def health_check():
     return 'OK', 200
 
 
-# Initialize the cache and the scheduler
-update_cache()
-scheduler = BackgroundScheduler()
-scheduler.add_job(update_cache, 'interval', hours=config.SCHEDULER_INTERVAL)
-logging.info(
-    'Scheduler started with job to update cache every %s hours.',
-    config.SCHEDULER_INTERVAL
-)
-scheduler.start()
+def run_app():
+    """
+    Start the Flask application along with a background scheduler.
 
-if __name__ == '__main__':
+    This function initializes the application cache, sets up a background
+    scheduler to update the cache at regular intervals, and starts the Flask
+    application. The interval at which the cache is updated is determined by
+    the `SCHEDULER_INTERVAL` configuration.
+
+    The Flask application is started with the host and port specified in the
+    configuration. If the `FLASK_DEBUG` environment variable is set to 'true',
+    the application will run in debug mode.
+
+    Side Effects:
+        - Calls `update_cache()` to initialize the cache with the latest data.
+        - Starts a background scheduler to call `update_cache()` at regular
+          intervals.
+        - Logs the initiation of cache updating and the Flask application
+          start.
+        - Starts the Flask application server which will run indefinitely until
+          stopped.
+        - Logs when the Flask application is stopped.
+
+    Environment Variables:
+        FLASK_DEBUG: If set to 'true', runs the application in debug mode.
+                     Default is 'false'.
+
+    Configuration Variables:
+        - HOST: The host address on which the Flask application will listen.
+        - PORT: The port number on which the Flask application will listen.
+        - SCHEDULER_INTERVAL: The interval in hours for the scheduler to update
+                              the cache.
+
+    Note:
+        This function is intended to be the entry point of the application. It
+        should be called if the script is run as the main module.
+    """
+    update_cache()
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(update_cache, 'interval',
+                      hours=config.SCHEDULER_INTERVAL)
+    logging.info(
+        'Scheduler started with job to update cache every %s hours.',
+        config.SCHEDULER_INTERVAL
+    )
+    scheduler.start()
+
+    # Start the Flask application
     logging.info('Starting application...')
     is_debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(host=config.HOST, port=config.PORT, debug=is_debug_mode)
     logging.info('Application stopped.')
+
+if __name__ == '__main__':
+    run_app()
