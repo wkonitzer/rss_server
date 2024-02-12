@@ -10,9 +10,12 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install any needed packages specified in requirements.txt
+# Copy the requirements file
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Upgrade pip and install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy the application files into the container at /app
 COPY app.py get_latest_release.py config.py fetch_functions.py product_utils.py ./
