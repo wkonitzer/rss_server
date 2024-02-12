@@ -21,12 +21,10 @@ def construct_url(repository, channel):
     :type repository: str
     :param channel: The channel which the product belongs to.
     :type channel: str
-    :param component: The component of the product.
-    :type component: str
     :return: The constructed URL as a string.
     :rtype: str
     """
-    return f"{repository}/win/static/{channel}/x86_64/"
+    return f"{repository}/ubuntu/dists/jammy/pool/{channel}/amd64/"
 
 def parse_page_text(page_text, component):
     """
@@ -45,13 +43,20 @@ def parse_page_text(page_text, component):
     :rtype: list of dict
     """
     pattern = re.compile(
-        rf"{component}-([0-9]+\.[0-9]+\.[0-9]+)\.zip\s+"
+        rf"{component}-ee_([0-9]+\.[0-9]+\.[0-9]+)~([0-9]+)-0~ubuntu-jammy_amd64\.deb\s+"
         rf"([0-9]+-[0-9]+-[0-9]+)\s+([0-9]+:[0-9]+:[0-9]+)"
     )
     releases = []
     for match in pattern.finditer(page_text):
-        version = match.group(1)
-        datetime_str = f"{match.group(2)} {match.group(3)}"
+        base_version = match.group(1)
+
+        # Assuming ~3 is the base revision number and should result in no suffix.
+        revision_number = int(match.group(2)) - 3
+        if revision_number > 0:
+            version = f"{base_version}-{revision_number}"
+        else:
+            version = base_version
+        datetime_str = f"{match.group(3)} {match.group(4)}"
         datetime_object = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
         releases.append({'name': version, 'date': datetime_object})
     return releases

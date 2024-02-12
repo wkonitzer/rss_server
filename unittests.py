@@ -288,11 +288,69 @@ def test_mosk_version_extraction(mock_get_release, mock_cache):
     new version formats.
 
     Args:
-        mock_get_latest_release (MagicMock): Mock of the get_latest_release
-                                             function.
-        mock_release_cache (MagicMock): Mock of the release_cache object.
+        mock_get_elease (MagicMock): Mock of the get_latest_release function.
+        mock_cache (MagicMock): Mock of the release_cache object.
     """
-    logger.debug("Mock get_latest_release called with: %s",
+    logger.debug("mock_get_release called with: %s",
+                 mock_get_release.call_args_list)
+
+    # Mock the request to get the release content
+    release_content = "some content that would be returned by requests.get"
+    expected_version_info = mock_get_release.return_value
+    logger.debug("Expected version info: %s", expected_version_info)
+
+    with patch('requests.get') as mock_request:
+        mock_response = Mock()
+        mock_response.text = release_content
+        mock_request.return_value = mock_response
+
+        # Update cache
+        update_cache()
+
+        # Log the call arguments for debugging
+        logger.debug("Mock get_latest_release called with: %s",
+                     mock_get_release.call_args_list)
+        logger.debug("Mock cache set called with: %s",
+                     mock_cache.set.call_args_list)
+
+        # Use assert_any_call to ensure the expected call was made at some
+        # point
+        mock_get_release.assert_any_call({
+            'product': 'mcr',
+            'repository': 'https://repos.mirantis.com',
+            'channel': 'stable',
+            'component': 'docker',
+            'fetch_function': ANY
+        })
+
+        # If you want to ensure that the cache was updated with the expected
+        # version, iterate over call_args_list
+        found_version_call = False
+        for call_args in mock_cache.set.call_args_list:
+            name, version_tuple = call_args[0]
+            if name == 'mosk_https://binary.mirantis.com_releases/cluster/':
+                found_version_call = version_tuple == expected_version_info
+                break
+
+        assert found_version_call, (
+            "The cache was not updated with the expected version "
+            "for MOSK."
+        )
+
+@pytest.mark.parametrize('mock_get_release', [
+    ('mcr', ('23.0.9', '2023-10-05T12:00:00Z')),    # Standard format
+    ('mcr', ('23.0.9-1', '2023-10-06T12:00:00Z')),  # Incremented format
+], indirect=['mock_get_release'])
+def test_mcr_version_format_handling(mock_get_release, mock_cache):
+    """
+    Test the MCR version extraction and handling for both standard and
+    incremented version formats.
+
+    Args:
+        mock_get_release (MagicMock): Mock of the get_latest_release function.
+        mock_cache (MagicMock): Mock of the release_cache object.
+    """
+    logger.debug("mock_get_release called with: %s",
                  mock_get_release.call_args_list)
 
     # Mock the request to get the release content
@@ -328,13 +386,13 @@ def test_mosk_version_extraction(mock_get_release, mock_cache):
         found_version_call = False
         for call_args in mock_cache.set.call_args_list:
             name, version_tuple = call_args[0]
-            if name == 'mosk_https://binary.mirantis.com_releases/cluster/':
+            if name == 'mcr_https://repos.mirantis.com_stable_docker':
                 found_version_call = version_tuple == expected_version_info
                 break
 
         assert found_version_call, (
             "The cache was not updated with the expected version "
-            "for MOSK."
+            "for MCR."
         )
 
 
