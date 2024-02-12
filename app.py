@@ -37,7 +37,7 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 
 # Expose some default metrics
-metrics.info('app_info', 'Application info', version='1.0.7')
+metrics.info('app_info', 'Application info', version='1.0.8')
 
 
 class SimpleCache:
