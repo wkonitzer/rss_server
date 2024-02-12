@@ -24,8 +24,8 @@ COPY app.py get_latest_release.py config.py fetch_functions.py product_utils.py 
 EXPOSE 4000
 
 # Run as non-root user
-RUN useradd -m myuser
-USER myuser
+RUN useradd -m --uid 1001 myuser
+USER 1001
 
 # Run app.py when the container launches
 CMD ["gunicorn", "--preload", "-w", "1", "-b", "0.0.0.0:4000", "app:app", "--access-logfile", "-", "--access-logformat", "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -"]

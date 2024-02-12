@@ -21,6 +21,9 @@ spec:
       containers:
       - name: rss-server
         image: msr2.konitzer.dev/wkonitzer/rss_server:latest
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
         env:
 #        - name: LOGGING_LEVEL
 #          value: "DEBUG"  
