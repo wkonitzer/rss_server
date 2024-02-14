@@ -20,6 +20,7 @@ import concurrent.futures
 from datetime import datetime as dt
 
 from flask import Flask, Response
+from prometheus_client import Counter, Gauge, Histogram
 from prometheus_flask_exporter import PrometheusMetrics
 from apscheduler.schedulers.background import BackgroundScheduler
 import feedgenerator
@@ -37,7 +38,22 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 
 # Expose some default metrics
-metrics.info('app_info', 'Application info', version='1.0.8')
+metrics.info('app_info', 'Application info', version='1.0.9')
+
+# Cache metrics
+cache_hits = Counter('cache_hits', 'Number of cache hits')
+cache_misses = Counter('cache_misses', 'Number of cache misses')
+cache_size = Gauge('cache_size', 'Number of items in the cache')
+
+# Update scheduler metrics
+update_duration = Histogram('update_duration_seconds',
+                            'Time spent updating cache')
+update_failures = Counter('update_failures', 'Number of update failures')
+
+# Feed generation metrics
+feed_requests = Counter('feed_requests', 'Number of RSS feed requests')
+feed_generation_duration = Histogram('feed_generation_duration_seconds',
+                                     'Time spent generating RSS feed')
 
 
 class SimpleCache:
@@ -50,6 +66,7 @@ class SimpleCache:
     def __init__(self, timeout=86400):  # Default timeout is 24 hours
         self.cache = {}
         self.timeout = timeout
+        cache_size.set(0)  # Initialize cache size
 
     def get(self, key):
         """
@@ -66,7 +83,9 @@ class SimpleCache:
         if data:
             timestamp, value = data
             if time.time() - timestamp < self.timeout:
+                cache_hits.inc()  # Increment cache hit counter
                 return value
+        cache_misses.inc()  # Increment cache miss counter
         return None
 
     def set(self, key, value):
@@ -78,6 +97,7 @@ class SimpleCache:
         value (Any): The value that needs to be stored for the given key.
         """
         self.cache[key] = (time.time(), value)
+        cache_size.set(len(self.cache))  # Update cache size gauge
 
     def get_link(self, product, version):
         """
@@ -149,27 +169,37 @@ def update_cache():
                         which the latest release information needs to be
                         fetched.
         """
-        # Determine cache key for release info
-        available_keys = [key for key in ['product', 'repository',
-                                          'channel', 'component', 'registry',
-                                          'branch', 'url', 'prefix'] 
-                          if key in product]
-        key_parts = [product[key] for key in available_keys]
-        key = '_'.join(key_parts)
+        try:
+            # Determine cache key for release info
+            available_keys = [key for key in ['product', 'repository',
+                                              'channel', 'component',
+                                              'registry', 'branch', 'url',
+                                              'prefix'] 
+                              if key in product]
+            key_parts = [product[key] for key in available_keys]
+            key = '_'.join(key_parts)
 
-        # Fetch the latest release info and update the cache
-        release_info = get_latest_release(product)
-        release_cache.set(key, release_info)
-        logging.info('Cache updated for product: %s', product["product"])
+            # Fetch the latest release info and update the cache
+            release_info = get_latest_release(product)
+            release_cache.set(key, release_info)
+            logging.info('Cache updated for product: %s', product["product"])
 
-        # If the release info is valid, cache the product link
-        if release_info and len(release_info) > 1:
-            version, _ = release_info
-            link = generate_product_link(product, version)
-            release_cache.set_link(product, version, link)
+            # If the release info is valid, cache the product link
+            if release_info and len(release_info) > 1:
+                version, _ = release_info
+                link = generate_product_link(product, version)
+                release_cache.set_link(product, version, link)
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(fetch_and_cache, products)
+        except ValueError as value_error:
+            update_failures.inc()  # Increment on failure
+            logging.error(
+                "Failed to update cache for product %s due to value error: %s",
+                product.get("product", "unknown"), str(value_error)
+            )
+
+    with update_duration.time():  # Start measuring time
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(fetch_and_cache, products)
 
     logging.info('Cache update complete.')
 
@@ -289,19 +319,21 @@ def rss_feed():
             pubdate=release_date or dt.now(),
         )
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(process_product, products)
+    feed_requests.inc()  # Increment feed request counter
+    with feed_generation_duration.time():  # Measure feed generation time
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(process_product, products)
 
-    # Before calling writeString, ensure all items have real datetime objects
-    # for pubdate
-    for item in feed.items:
-        if not isinstance(item['pubdate'], dt):
-            item['pubdate'] = dt.now()  # Or another suitable datetime value
+        # Before calling writeString, ensure all items have real datetime objects
+        # for pubdate
+        for item in feed.items:
+            if not isinstance(item['pubdate'], dt):
+                item['pubdate'] = dt.now()  # Or another suitable datetime value
 
-    response = Response(feed.writeString('utf-8'),
-                        content_type='application/rss+xml; charset=utf-8')
-    logging.info('RSS feed generated successfully.')
-    return response
+        response = Response(feed.writeString('utf-8'),
+                            content_type='application/rss+xml; charset=utf-8')
+        logging.info('RSS feed generated successfully.')
+        return response
 
 
 @app.route('/health')
