@@ -123,6 +123,11 @@ PRODUCTS = [
         'url': 'https://api.k8slens.dev/binaries/latest.json',
         'fetch_function': fetch_lens
     },
+    {
+        'product': 'lagoon',
+        'url': 'https://github.com/uselagoon/lagoon/releases/latest',
+        'fetch_function': fetch_k0s
+    },
 ]
 
 # Cache expiration time in seconds

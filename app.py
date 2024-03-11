@@ -38,7 +38,7 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 
 # Expose some default metrics
-metrics.info('app_info', 'Application info', version='1.0.10')
+metrics.info('app_info', 'Application info', version='1.0.11')
 
 # Cache metrics
 cache_hits = Counter('cache_hits', 'Number of cache hits')

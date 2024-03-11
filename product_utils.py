@@ -45,6 +45,10 @@ def generate_product_link(product, version):
         link = (f"https://github.com/k0sproject/k0s/releases/"
                f"tag/v{version}+k0s.0") 
 
+    elif product['product'] == 'lagoon':
+        link = (f"https://github.com/uselagoon/lagoon/releases/"
+               f"tag/v{version}")         
+
     elif product['product'] == 'lens':
         version_parts = version.split('.')
         version_format = '-'.join(version_parts)

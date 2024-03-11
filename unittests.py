@@ -212,6 +212,11 @@ def test_update_cache(mock_get_release, mock_cache):
             'fetch_function': ANY
         }),
         call({
+            'product': 'lagoon',
+            'url': 'https://github.com/uselagoon/lagoon/releases/latest',
+            'fetch_function': ANY
+        }),
+        call({
             'product': 'lens',
             'url': 'https://api.k8slens.dev/binaries/latest.json',
             'fetch_function': ANY
@@ -239,6 +244,8 @@ def test_update_cache(mock_get_release, mock_cache):
         call('mosk_https://binary.mirantis.com_releases/cluster/',
              ('1.0.0', '2023-10-01T12:00:00Z')),
         call('k0s_https://github.com/k0sproject/k0s/releases/latest',
+             ('1.0.0', '2023-10-01T12:00:00Z')),
+        call('lagoon_https://github.com/uselagoon/lagoon/releases/latest',
              ('1.0.0', '2023-10-01T12:00:00Z')),
         call('lens_https://api.k8slens.dev/binaries/latest.json',
              ('1.0.0', '2023-10-01T12:00:00Z'))
@@ -292,6 +299,8 @@ def test_scheduled_update(mock_cache, mock_dt_now):
         call('mosk_https://binary.mirantis.com_releases/cluster/',
              ('1.1.0', '2023-10-02T12:00:00Z')),
         call('k0s_https://github.com/k0sproject/k0s/releases/latest',
+             ('1.1.0', '2023-10-02T12:00:00Z')),
+        call('lagoon_https://github.com/uselagoon/lagoon/releases/latest',
              ('1.1.0', '2023-10-02T12:00:00Z')),
         call('lens_https://api.k8slens.dev/binaries/latest.json',
              ('1.1.0', '2023-10-02T12:00:00Z'))
