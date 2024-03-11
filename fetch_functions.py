@@ -282,6 +282,7 @@ def fetch_mke(product_config):
 
     repository = product_config.get('repository')
     registry = product_config.get('registry')
+    branch = product_config.get('branch')
     url = f"{registry}/v2/repositories/{repository}/tags"
 
     config.logger.debug('Constructed URL: %s', url)
@@ -303,7 +304,7 @@ def fetch_mke(product_config):
                                 tag_name, date_str)
 
             if tag_name and date_str and re.match('^[0-9]+\\.[0-9]+\\.[0-9]+$',
-                                                  tag_name):
+                                               tag_name) and branch in tag_name:
                 date_object = datetime.strptime(date_str,
                                                 '%Y-%m-%dT%H:%M:%S.%fZ')
                 releases.append({'name': tag_name, 'date': date_object})
