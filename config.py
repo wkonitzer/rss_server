@@ -74,28 +74,28 @@ PRODUCTS = [
         'fetch_function': fetch_mcp
     },
     {
-        'product': 'mke-3.7',
+        'product': 'mke',
         'repository': 'mirantis/ucp',
         'registry': 'https://hub.docker.com',
         'branch': '3.7',
         'fetch_function': fetch_mke
     },
     {
-        'product': 'mke-3.6',
+        'product': 'mke',
         'repository': 'mirantis/ucp',
         'registry': 'https://hub.docker.com',
         'branch': '3.6',
         'fetch_function': fetch_mke
     },
     {
-        'product': 'msr-3.1',
+        'product': 'msr',
         'repository': 'msr/msr',
         'registry': 'https://registry.mirantis.com',
         'branch': '3.1',
         'fetch_function': fetch_msr
     },
     {
-        'product': 'msr-2.9',
+        'product': 'msr',
         'repository': 'mirantis/dtr',
         'registry': 'https://registry.hub.docker.com',
         'branch': '2.9',
