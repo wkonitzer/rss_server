@@ -189,6 +189,13 @@ def test_update_cache(mock_get_release, mock_cache):
         }),
         call({
             'product': 'msr',
+            'repository': 'msr/msr',
+            'registry': 'https://registry.mirantis.com',
+            'branch': '3.0',
+            'fetch_function': ANY
+        }),
+        call({
+            'product': 'msr',
             'repository': 'mirantis/dtr',
             'registry': 'https://registry.hub.docker.com',
             'branch': '2.9',
@@ -236,6 +243,8 @@ def test_update_cache(mock_get_release, mock_cache):
         call('mke_mirantis/ucp_https://hub.docker.com_3.6',
              ('1.0.0', '2023-10-01T12:00:00Z')),
         call('msr_msr/msr_https://registry.mirantis.com_3.1',
+             ('1.0.0', '2023-10-01T12:00:00Z')),
+        call('msr_msr/msr_https://registry.mirantis.com_3.0',
              ('1.0.0', '2023-10-01T12:00:00Z')),
         call('msr_mirantis/dtr_https://registry.hub.docker.com_2.9',
              ('1.0.0', '2023-10-01T12:00:00Z')),
@@ -291,6 +300,8 @@ def test_scheduled_update(mock_cache, mock_dt_now):
         call('mke_mirantis/ucp_https://hub.docker.com_3.6',
              ('1.1.0', '2023-10-02T12:00:00Z')),
         call('msr_msr/msr_https://registry.mirantis.com_3.1',
+             ('1.1.0', '2023-10-02T12:00:00Z')),
+        call('msr_msr/msr_https://registry.mirantis.com_3.0',
              ('1.1.0', '2023-10-02T12:00:00Z')),
         call('msr_mirantis/dtr_https://registry.hub.docker.com_2.9',
              ('1.1.0', '2023-10-02T12:00:00Z')),

@@ -96,6 +96,13 @@ PRODUCTS = [
     },
     {
         'product': 'msr',
+        'repository': 'msr/msr',
+        'registry': 'https://registry.mirantis.com',
+        'branch': '3.0',
+        'fetch_function': fetch_msr
+    },
+    {
+        'product': 'msr',
         'repository': 'mirantis/dtr',
         'registry': 'https://registry.hub.docker.com',
         'branch': '2.9',
