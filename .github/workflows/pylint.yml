@@ -27,6 +27,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends libxml2-dev libxslt-dev && break || sleep 10;
         done      
         python -m pip install --upgrade pip
+        pip install -r requirements.txt
         pip install pylint pytest
     - name: Analysing the code with pylint
       run: |
