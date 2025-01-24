@@ -448,7 +448,7 @@ def parse_msr_releases(data, branch):
             date_str = entry.get('created', '')
             # Normalize app_version by stripping "v" if present
             if app_version:
-                app_version = app_version.lstrip('v')        
+                app_version = app_version.lstrip('v')
             if app_version and '-' not in app_version:
                 if date_str:
                     try:
