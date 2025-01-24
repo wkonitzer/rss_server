@@ -68,11 +68,30 @@ PRODUCTS = [
         'fetch_function': fetch_mcr
     },
     {
+        'product': 'mcr',
+        'repository': 'https://repos.mirantis.com',
+        'channel': 'stable-25.0',
+        'component': 'docker',
+        'fetch_function': fetch_mcr
+    },    
+    {
         'product': 'mcp',
         'repository': 'https://mirror.mirantis.com',
         'channel': 'update',
         'fetch_function': fetch_mcp
     },
+    {
+        'product': 'mke',
+        'url': 'https://github.com/MirantisContainers/mke-release/releases/latest',
+        'fetch_function': fetch_k0s
+    },    
+    {
+        'product': 'mke',
+        'repository': 'mirantis/ucp',
+        'registry': 'https://hub.docker.com',
+        'branch': '3.8',
+        'fetch_function': fetch_mke
+    },    
     {
         'product': 'mke',
         'repository': 'mirantis/ucp',
@@ -87,6 +106,13 @@ PRODUCTS = [
         'branch': '3.6',
         'fetch_function': fetch_mke
     },
+    {
+        'product': 'msr',
+        'repository': 'harbor/helm',
+        'registry': 'https://registry.mirantis.com',
+        'branch': '4.0',
+        'fetch_function': fetch_msr
+    },    
     {
         'product': 'msr',
         'repository': 'msr/msr',

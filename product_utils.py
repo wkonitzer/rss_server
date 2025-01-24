@@ -47,7 +47,17 @@ def generate_product_link(product, version):
 
     elif product['product'] == 'lagoon':
         link = (f"https://github.com/uselagoon/lagoon/releases/"
-               f"tag/v{version}")         
+               f"tag/v{version}")
+
+    elif product['product'] == 'mke':
+        version_parts = version.split('.')
+        if int(version_parts[0]) < 4:
+            link = (f"https://docs.mirantis.com/{product['product']}/"
+                    f"{major_minor}/release-notes/"
+                    f"{version.replace('.', '-')}.html")
+        else:
+            link = (f"https://docs.mirantis.com/{product['product']}-docs/"
+                    f"docs/release-notes/{version}/")                               
 
     elif product['product'] == 'lens':
         version_parts = version.split('.')

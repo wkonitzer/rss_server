@@ -43,7 +43,7 @@ def parse_page_text(page_text, component):
     :rtype: list of dict
     """
     pattern = re.compile(
-        rf"{component}-ee_([0-9]+\.[0-9]+\.[0-9]+)~([0-9]+)-0~ubuntu-jammy_amd64\.deb\s+"
+        rf"{component}-ee_(\d+\.\d+\.\d+)(?:~(\d+))?[\w\-.~]*_amd64\.deb\s+"
         rf"([0-9]+-[0-9]+-[0-9]+)\s+([0-9]+:[0-9]+:[0-9]+)"
     )
     releases = []
@@ -51,7 +51,7 @@ def parse_page_text(page_text, component):
         base_version = match.group(1)
 
         # Assuming ~3 is the base revision number and should result in no suffix.
-        revision_number = int(match.group(2)) - 3
+        revision_number = int(match.group(2)) - 3 if match.group(2) else 0
         if revision_number > 0:
             version = f"{base_version}-{revision_number}"
         else:
@@ -440,21 +440,27 @@ def parse_msr_releases(data, branch):
     """
     config = importlib.import_module('config')
     releases = []
-    for entry in data.get('entries', {}).get('msr', []):
-        app_version = entry.get('appVersion')
-        date_str = entry.get('created', '')
-        if app_version and '-' not in app_version:
-            if date_str:
-                try:
-                    date_object = datetime.strptime(date_str,
-                                                    '%Y-%m-%dT%H:%M:%S.%fZ')
-                    releases.append({'name': app_version, 'date': date_object})
-                except ValueError:
-                    config.logger.error("Error parsing date string: %s",
-                                        date_str)
-            else:
-                config.logger.warning("No date found for version %s",
-                                      app_version)
+    # Normalize the branch input by stripping the "v" prefix if present
+    branch = branch.lstrip('v')
+    for key in ["harbor", "msr"]:
+        for entry in data.get('entries', {}).get(key, []):
+            app_version = entry.get('appVersion')
+            date_str = entry.get('created', '')
+            # Normalize app_version by stripping "v" if present
+            if app_version:
+                app_version = app_version.lstrip('v')        
+            if app_version and '-' not in app_version:
+                if date_str:
+                    try:
+                        date_object = datetime.strptime(date_str,
+                                                        '%Y-%m-%dT%H:%M:%S.%fZ')
+                        releases.append({'name': app_version, 'date': date_object})
+                    except ValueError:
+                        config.logger.error("Error parsing date string: %s",
+                                            date_str)
+                else:
+                    config.logger.warning("No date found for version %s",
+                                          app_version)
 
     if branch:
         major, minor = map(int, branch.split('.'))
