@@ -29,4 +29,4 @@ pipeline:
   - name: Build certifi wheel
     runs: |
       pip wheel certifi --wheel-dir /package
-      pip install --no-index --find-links=/package certifi --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package certifi --prefix "${{targets.destdir}}"

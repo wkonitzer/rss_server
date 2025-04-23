@@ -29,4 +29,4 @@ pipeline:
   - name: Build soupsieve wheel
     runs: |
       pip wheel soupsieve --wheel-dir /package
-      pip install --no-index --find-links=/package soupsieve --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package soupsieve --prefix "${{targets.destdir}}"

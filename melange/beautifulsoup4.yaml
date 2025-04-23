@@ -29,4 +29,4 @@ pipeline:
   - name: Build beautifulsoup4 wheel
     runs: |
       pip wheel beautifulsoup4 --wheel-dir /package
-      pip install --no-index --find-links=/package beautifulsoup4 --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package beautifulsoup4 --prefix "${{targets.destdir}}"

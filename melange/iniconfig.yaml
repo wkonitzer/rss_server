@@ -29,4 +29,4 @@ pipeline:
   - name: Build iniconfig wheel
     runs: |
       pip wheel iniconfig --wheel-dir /package
-      pip install --no-index --find-links=/package iniconfig --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package iniconfig --prefix "${{targets.destdir}}"

@@ -29,4 +29,4 @@ pipeline:
   - name: Build pyyaml wheel
     runs: |
       pip wheel pyyaml --wheel-dir /package
-      pip install --no-index --find-links=/package pyyaml --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package pyyaml --prefix "${{targets.destdir}}"

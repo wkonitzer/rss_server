@@ -29,4 +29,4 @@ pipeline:
   - name: Build itsdangerous wheel
     runs: |
       pip wheel itsdangerous --wheel-dir /package
-      pip install --no-index --find-links=/package itsdangerous --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package itsdangerous --prefix "${{targets.destdir}}"

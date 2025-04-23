@@ -29,4 +29,4 @@ pipeline:
   - name: Build flask wheel
     runs: |
       pip wheel flask --wheel-dir /package
-      pip install --no-index --find-links=/package flask --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package flask --prefix "${{targets.destdir}}"

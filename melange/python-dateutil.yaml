@@ -29,4 +29,4 @@ pipeline:
   - name: Build python-dateutil wheel
     runs: |
       pip wheel python-dateutil --wheel-dir /package
-      pip install --no-index --find-links=/package python-dateutil --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package python-dateutil --prefix "${{targets.destdir}}"

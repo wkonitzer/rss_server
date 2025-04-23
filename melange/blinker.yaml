@@ -29,4 +29,4 @@ pipeline:
   - name: Build blinker wheel
     runs: |
       pip wheel blinker --wheel-dir /package
-      pip install --no-index --find-links=/package blinker --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package blinker --prefix "${{targets.destdir}}"

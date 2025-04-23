@@ -29,4 +29,4 @@ pipeline:
   - name: Build urllib3 wheel
     runs: |
       pip wheel urllib3 --wheel-dir /package
-      pip install --no-index --find-links=/package urllib3 --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package urllib3 --prefix "${{targets.destdir}}"

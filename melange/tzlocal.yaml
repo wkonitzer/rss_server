@@ -29,4 +29,4 @@ pipeline:
   - name: Build tzlocal wheel
     runs: |
       pip wheel tzlocal --wheel-dir /package
-      pip install --no-index --find-links=/package tzlocal --prefix "${targets.destdir}"
+      pip install --no-index --find-links=/package tzlocal --prefix "${{targets.destdir}}"
