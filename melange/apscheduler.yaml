@@ -21,8 +21,4 @@ pipeline:
   - name: Build APScheduler wheel
     runs: |
       pip wheel APScheduler --wheel-dir /package
-      pip install --no-index --find-links=/package APScheduler --target=/app
-
-paths:
-  - path: /app
-    type: tree
+      pip install --no-index --find-links=/package APScheduler --prefix "${{targets.destdir}}"
