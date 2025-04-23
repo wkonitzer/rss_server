@@ -24,20 +24,27 @@ jobs:
             GH_REPO=$2
             ARCH="linux_amd64"
       
+            echo "Fetching latest release for $TOOL_NAME..."
             LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
             TARBALL="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
             URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${TARBALL}"
       
-            echo "Downloading $TOOL_NAME $LATEST from $URL"
-            curl -sL "$URL" | tar xz
-            sudo mv $TOOL_NAME /usr/local/bin/
-            chmod +x /usr/local/bin/$TOOL_NAME
+            echo "Downloading $TOOL_NAME from $URL"
+            curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
+            tar -xzf ${TOOL_NAME}.tar.gz
+            chmod +x $TOOL_NAME
+            sudo mv $TOOL_NAME /usr/local/bin/$TOOL_NAME
+            echo "Installed $TOOL_NAME to /usr/local/bin"
           }
       
           sudo apt-get update && sudo apt-get install -y jq
       
           install_latest_release melange chainguard-dev/melange
           install_latest_release apko chainguard-dev/apko
+      
+          # Verify install
+          which melange && melange --version
+          which apko && apko --version
 
       - name: Build all Python packages with melange
         run: |
