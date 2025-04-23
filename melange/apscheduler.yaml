@@ -20,8 +20,7 @@ environment:
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - gcc
-      - musl-dev
+      - build-base
 
 pipeline:
   - name: Build APScheduler wheel
