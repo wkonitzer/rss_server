@@ -68,14 +68,18 @@ jobs:
             echo "❌ apko not found in PATH"
             exit 1
           fi
-          apko version        
+          apko version
+
+      - name: Generate signing key for this build
+        run: |
+          melange keygen melange/melange.rsa
 
       - name: Build all Python packages with melange
         run: |
           mkdir -p packages
           for arch in x86_64 aarch64; do
-            for f in .github/melange/*.yaml; do
-              melange build $f --arch $arch --out-dir packages/$arch --signing-key .github/melange/melange.rsa || true
+            for f in melange/*.yaml; do
+              melange build $f --arch $arch --out-dir packages/$arch --signing-key melange/melange.rsa || true
             done
           done
 
