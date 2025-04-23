@@ -17,6 +17,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up QEMU for ARM64 builds
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+
       - name: Install latest melange and apko
         run: |
           install_latest_release() {
@@ -76,14 +81,17 @@ jobs:
 
       - name: Build all Python packages with melange
         run: |
-          mkdir -p packages
-          for arch in x86_64 aarch64; do
-            for f in melange/*.yaml; do
-              echo "Building $f"
-              cat $f | nl
-              melange build $f --arch $arch --out-dir packages/$arch --signing-key melange/melange.rsa --runner docker || true
-            done
-          done
+          sudo apt-get install -y parallel
+          mkdir -p packages/x86_64 packages/aarch64
+
+          find melange -name '*.yaml' | parallel -j 4 'melange build {} --arch x86_64 --out-dir packages/x86_64 --signing-key melange/melange.rsa --runner docker || true'
+          find melange -name '*.yaml' | parallel -j 4 'melange build {} --arch aarch64 --out-dir packages/aarch64 --signing-key melange/melange.rsa --runner docker || true'
+
+
+      - name: Copy application source into /app
+        run: |
+          mkdir -p app
+          cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py app/
 
       - name: Build container image with apko
         run: |

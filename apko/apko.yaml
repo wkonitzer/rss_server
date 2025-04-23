@@ -38,7 +38,7 @@ contents:
 
 entrypoint:
   command: ["python"]
-  args: ["-m", "gunicorn", "--preload", "-w", "1", "-b", "0.0.0.0:4000", "app:app"]
+  args: ["-m", "gunicorn", "--preload", "-w", "1", "-b", "0.0.0.0:4000", "app:app", "--access-logfile", "-", "--access-logformat", "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -" ]
 
 work-dir: /app
 
@@ -48,3 +48,6 @@ accounts:
 paths:
   - path: /app
     permissions: 755
+
+expose-ports:
+  - 4000
