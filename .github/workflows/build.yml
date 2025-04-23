@@ -32,15 +32,18 @@ jobs:
             echo "Downloading $TOOL_NAME from $URL"
             curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
             tar -xzf ${TOOL_NAME}.tar.gz
-            chmod +x $TOOL_NAME
-            sudo mv $TOOL_NAME /usr/local/bin/$TOOL_NAME
-            echo "Installed $TOOL_NAME to /usr/local/bin"
+            mkdir -p ~/.local/bin
+            mv $TOOL_NAME ~/.local/bin/$TOOL_NAME
+            chmod +x ~/.local/bin/$TOOL_NAME
+            echo "Installed $TOOL_NAME to ~/.local/bin"
           }
       
           sudo apt-get update && sudo apt-get install -y jq
       
           install_latest_release melange chainguard-dev/melange
           install_latest_release apko chainguard-dev/apko
+
+          export PATH="$HOME/.local/bin:$PATH"
       
           echo "Verifying melange..."
           if ! command -v melange >/dev/null; then
