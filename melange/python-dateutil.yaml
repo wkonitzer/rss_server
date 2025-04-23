@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build python-dateutil wheel
+    runs: |
       pip wheel python-dateutil --wheel-dir /package
       pip install --no-index --find-links=/package python-dateutil --target=/app
 

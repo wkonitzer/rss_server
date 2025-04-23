@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build click wheel
+    runs: |
       pip wheel click --wheel-dir /package
       pip install --no-index --find-links=/package click --target=/app
 

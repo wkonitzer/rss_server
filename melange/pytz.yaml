@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build pytz wheel
+    runs: |
       pip wheel pytz --wheel-dir /package
       pip install --no-index --find-links=/package pytz --target=/app
 

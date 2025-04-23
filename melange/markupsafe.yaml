@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build MarkupSafe wheel
+    runs: |
       pip wheel MarkupSafe --wheel-dir /package
       pip install --no-index --find-links=/package MarkupSafe --target=/app
 

@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build beautifulsoup4 wheel
+    runs: |
       pip wheel beautifulsoup4 --wheel-dir /package
       pip install --no-index --find-links=/package beautifulsoup4 --target=/app
 

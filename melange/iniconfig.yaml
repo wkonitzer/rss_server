@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build iniconfig wheel
+    runs: |
       pip wheel iniconfig --wheel-dir /package
       pip install --no-index --find-links=/package iniconfig --target=/app
 

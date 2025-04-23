@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build Jinja2 wheel
+    runs: |
       pip wheel Jinja2 --wheel-dir /package
       pip install --no-index --find-links=/package Jinja2 --target=/app
 

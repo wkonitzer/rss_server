@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build APScheduler wheel
+    runs: |
       pip wheel APScheduler --wheel-dir /package
       pip install --no-index --find-links=/package APScheduler --target=/app
 

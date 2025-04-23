@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build charset-normalizer wheel
+    runs: |
       pip wheel charset-normalizer --wheel-dir /package
       pip install --no-index --find-links=/package charset-normalizer --target=/app
 

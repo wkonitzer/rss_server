@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build PyYAML wheel
+    runs: |
       pip wheel PyYAML --wheel-dir /package
       pip install --no-index --find-links=/package PyYAML --target=/app
 

@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build certifi wheel
+    runs: |
       pip wheel certifi --wheel-dir /package
       pip install --no-index --find-links=/package certifi --target=/app
 

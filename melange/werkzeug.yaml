@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build Werkzeug wheel
+    runs: |
       pip wheel Werkzeug --wheel-dir /package
       pip install --no-index --find-links=/package Werkzeug --target=/app
 

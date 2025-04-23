@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build feedgen wheel
+    runs: |
       pip wheel feedgen --wheel-dir /package
       pip install --no-index --find-links=/package feedgen --target=/app
 

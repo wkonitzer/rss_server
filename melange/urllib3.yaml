@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build urllib3 wheel
+    runs: |
       pip wheel urllib3 --wheel-dir /package
       pip install --no-index --find-links=/package urllib3 --target=/app
 

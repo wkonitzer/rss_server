@@ -18,7 +18,8 @@ environment:
       - musl-dev
 
 pipeline:
-  - runs: |
+  - name: Build tzlocal wheel
+    runs: |
       pip wheel tzlocal --wheel-dir /package
       pip install --no-index --find-links=/package tzlocal --target=/app
 
