@@ -17,13 +17,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install melange + apko (public CLI tools)
+      - name: Install latest melange and apko
         run: |
-          curl -LO https://github.com/chainguard-dev/melange/releases/latest/download/melange-linux-amd64
-          chmod +x melange-linux-amd64 && sudo mv melange-linux-amd64 /usr/local/bin/melange
-
-          curl -LO https://github.com/chainguard-dev/apko/releases/latest/download/apko-linux-amd64
-          chmod +x apko-linux-amd64 && sudo mv apko-linux-amd64 /usr/local/bin/apko
+          install_latest_release() {
+            TOOL_NAME=$1
+            GH_REPO=$2
+            ARCH="linux_amd64"
+      
+            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
+            TARBALL="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
+            URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${TARBALL}"
+      
+            echo "Downloading $TOOL_NAME $LATEST from $URL"
+            curl -sL "$URL" | tar xz
+            sudo mv $TOOL_NAME /usr/local/bin/
+            chmod +x /usr/local/bin/$TOOL_NAME
+          }
+      
+          sudo apt-get update && sudo apt-get install -y jq
+      
+          install_latest_release melange chainguard-dev/melange
+          install_latest_release apko chainguard-dev/apko
 
       - name: Build all Python packages with melange
         run: |
