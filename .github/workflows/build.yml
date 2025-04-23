@@ -61,14 +61,14 @@ jobs:
             echo "❌ melange not found in PATH"
             exit 1
           fi
-          melange --version || echo "⚠️ melange version check failed"
+          melange version
       
           echo "Verifying apko..."
           if ! command -v apko >/dev/null; then
             echo "❌ apko not found in PATH"
             exit 1
           fi
-          apko --version || echo "⚠️ apko version check failed"          
+          apko version        
 
       - name: Build all Python packages with melange
         run: |
