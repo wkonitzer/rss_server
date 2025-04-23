@@ -33,7 +33,7 @@ jobs:
             curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
             tar -xzf ${TOOL_NAME}.tar.gz
             chmod +x $TOOL_NAME
-            sudo mv $TOOL_NAME /usr/local/bin/$TOOL_NAME
+            sudo install -m 0755 $TOOL_NAME /usr/local/bin/$TOOL_NAME
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
       
@@ -44,6 +44,12 @@ jobs:
 
       - name: Verify CLI tools
         run: |
+          echo "Listing /usr/local/bin:"
+          ls -lah /usr/local/bin
+
+          echo "PATH is: $PATH"
+          env | grep PATH
+          
           echo "Verifying melange..."
           if ! command -v melange >/dev/null; then
             echo "❌ melange not found in PATH"
