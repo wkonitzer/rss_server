@@ -23,7 +23,6 @@ pipeline:
       pip wheel APScheduler --wheel-dir /package
       pip install --no-index --find-links=/package APScheduler --target=/app
 
-data:
-  paths:
-    - path: /app
-      type: tree
+paths:
+  - path: /app
+    type: tree
