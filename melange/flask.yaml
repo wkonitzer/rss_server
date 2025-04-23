@@ -2,28 +2,31 @@ package:
   name: py3-flask
   version: latest
   epoch: 0
-  description: "Python package Flask"
+  description: "Python package flask"
   target-architecture:
     - x86_64
     - aarch64
+  copyright:
+    - license: BSD-3-Clause
 
 environment:
   contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - busybox
       - python3
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - gcc
-      - musl-dev
+      - build-base
 
 pipeline:
-  - name: Build Flask wheel
+  - name: Build flask wheel
     runs: |
-      pip wheel Flask --wheel-dir /package
-      pip install --no-index --find-links=/package Flask --target=/app
-
-data:
-  paths:
-    - path: /app
-      type: tree
+      pip wheel flask --wheel-dir /package
+      pip install --no-index --find-links=/package flask --prefix "${targets.destdir}"

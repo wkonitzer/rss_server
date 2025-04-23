@@ -2,28 +2,31 @@ package:
   name: py3-jinja2
   version: latest
   epoch: 0
-  description: "Python package Jinja2"
+  description: "Python package jinja2"
   target-architecture:
     - x86_64
     - aarch64
+  copyright:
+    - license: BSD-3-Clause
 
 environment:
   contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - busybox
       - python3
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - gcc
-      - musl-dev
+      - build-base
 
 pipeline:
-  - name: Build Jinja2 wheel
+  - name: Build jinja2 wheel
     runs: |
-      pip wheel Jinja2 --wheel-dir /package
-      pip install --no-index --find-links=/package Jinja2 --target=/app
-
-data:
-  paths:
-    - path: /app
-      type: tree
+      pip wheel jinja2 --wheel-dir /package
+      pip install --no-index --find-links=/package jinja2 --prefix "${targets.destdir}"

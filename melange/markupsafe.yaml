@@ -2,28 +2,31 @@ package:
   name: py3-markupsafe
   version: latest
   epoch: 0
-  description: "Python package MarkupSafe"
+  description: "Python package markupsafe"
   target-architecture:
     - x86_64
     - aarch64
+  copyright:
+    - license: BSD-3-Clause
 
 environment:
   contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - busybox
       - python3
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - gcc
-      - musl-dev
+      - build-base
 
 pipeline:
-  - name: Build MarkupSafe wheel
+  - name: Build markupsafe wheel
     runs: |
-      pip wheel MarkupSafe --wheel-dir /package
-      pip install --no-index --find-links=/package MarkupSafe --target=/app
-
-data:
-  paths:
-    - path: /app
-      type: tree
+      pip wheel markupsafe --wheel-dir /package
+      pip install --no-index --find-links=/package markupsafe --prefix "${targets.destdir}"

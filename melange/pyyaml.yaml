@@ -2,28 +2,31 @@ package:
   name: py3-pyyaml
   version: latest
   epoch: 0
-  description: "Python package PyYAML"
+  description: "Python package pyyaml"
   target-architecture:
     - x86_64
     - aarch64
+  copyright:
+    - license: MIT
 
 environment:
   contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - busybox
       - python3
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - gcc
-      - musl-dev
+      - build-base
 
 pipeline:
-  - name: Build PyYAML wheel
+  - name: Build pyyaml wheel
     runs: |
-      pip wheel PyYAML --wheel-dir /package
-      pip install --no-index --find-links=/package PyYAML --target=/app
-
-data:
-  paths:
-    - path: /app
-      type: tree
+      pip wheel pyyaml --wheel-dir /package
+      pip install --no-index --find-links=/package pyyaml --prefix "${targets.destdir}"

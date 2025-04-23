@@ -2,28 +2,31 @@ package:
   name: py3-werkzeug
   version: latest
   epoch: 0
-  description: "Python package Werkzeug"
+  description: "Python package werkzeug"
   target-architecture:
     - x86_64
     - aarch64
+  copyright:
+    - license: BSD-3-Clause
 
 environment:
   contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - busybox
       - python3
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - gcc
-      - musl-dev
+      - build-base
 
 pipeline:
-  - name: Build Werkzeug wheel
+  - name: Build werkzeug wheel
     runs: |
-      pip wheel Werkzeug --wheel-dir /package
-      pip install --no-index --find-links=/package Werkzeug --target=/app
-
-data:
-  paths:
-    - path: /app
-      type: tree
+      pip wheel werkzeug --wheel-dir /package
+      pip install --no-index --find-links=/package werkzeug --prefix "${targets.destdir}"

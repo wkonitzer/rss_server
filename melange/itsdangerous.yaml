@@ -6,24 +6,27 @@ package:
   target-architecture:
     - x86_64
     - aarch64
+  copyright:
+    - license: BSD-3-Clause
 
 environment:
   contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - busybox
       - python3
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - gcc
-      - musl-dev
+      - build-base
 
 pipeline:
   - name: Build itsdangerous wheel
     runs: |
       pip wheel itsdangerous --wheel-dir /package
-      pip install --no-index --find-links=/package itsdangerous --target=/app
-
-data:
-  paths:
-    - path: /app
-      type: tree
+      pip install --no-index --find-links=/package itsdangerous --prefix "${targets.destdir}"

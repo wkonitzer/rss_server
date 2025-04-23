@@ -2,12 +2,12 @@ package:
   name: py3-apscheduler
   version: latest
   epoch: 0
-  description: "Python package APScheduler"
+  description: "Python package apscheduler"
   target-architecture:
     - x86_64
     - aarch64
   copyright:
-    - license: Apache-2.0    
+    - license: MIT
 
 environment:
   contents:
@@ -16,7 +16,7 @@ environment:
       - https://packages.wolfi.dev/os
     keyring:
       - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
-      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub    
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
       - busybox
       - python3
@@ -26,7 +26,7 @@ environment:
       - build-base
 
 pipeline:
-  - name: Build APScheduler wheel
+  - name: Build apscheduler wheel
     runs: |
-      pip wheel APScheduler --wheel-dir /package
-      pip install --no-index --find-links=/package APScheduler --prefix "${{targets.destdir}}"
+      pip wheel apscheduler --wheel-dir /package
+      pip install --no-index --find-links=/package apscheduler --prefix "${targets.destdir}"
