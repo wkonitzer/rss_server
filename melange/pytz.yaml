@@ -26,3 +26,4 @@ pipeline:
 data:
   paths:
     - path: /app
+      type: tree
