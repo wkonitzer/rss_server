@@ -6,6 +6,8 @@ package:
   target-architecture:
     - x86_64
     - aarch64
+  copyright:
+    - license: Apache-2.0    
 
 environment:
   contents:
