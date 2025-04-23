@@ -9,14 +9,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    container:
-      image: cgr.dev/chainguard/sdk:latest
-      options: --privileged
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Install melange + apko (public CLI tools)
+        run: |
+          curl -LO https://github.com/chainguard-dev/melange/releases/latest/download/melange-linux-amd64
+          chmod +x melange-linux-amd64 && sudo mv melange-linux-amd64 /usr/local/bin/melange
+
+          curl -LO https://github.com/chainguard-dev/apko/releases/latest/download/apko-linux-amd64
+          chmod +x apko-linux-amd64 && sudo mv apko-linux-amd64 /usr/local/bin/apko
 
       - name: Build all Python packages with melange
         run: |
@@ -27,7 +34,7 @@ jobs:
             done
           done
 
-      - name: Build image with apko
+      - name: Build container image with apko
         run: |
           apko build .github/apko/apko.yaml rss-server.tar
           docker load < rss-server.tar
@@ -37,4 +44,3 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker tag rss-server ghcr.io/${{ github.repository_owner }}/rss-server:latest
           docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest
-
