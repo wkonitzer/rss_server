@@ -32,7 +32,13 @@ jobs:
             echo "Downloading $TOOL_NAME from $URL"
             curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
             tar -xzf ${TOOL_NAME}.tar.gz
-            chmod +x $TOOL_NAME
+
+            BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n 1)
+            if [ -z "$BINARY_PATH" ]; then
+              echo "❌ Could not find binary '$TOOL_NAME' in archive"
+              exit 1
+            fi
+            
             sudo install -m 0755 $TOOL_NAME /usr/local/bin/$TOOL_NAME
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
