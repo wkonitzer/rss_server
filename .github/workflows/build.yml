@@ -34,10 +34,9 @@ jobs:
             echo "Downloading $TOOL_NAME from $URL"
             curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
             tar -xzf ${TOOL_NAME}.tar.gz
-            mkdir -p ~/.local/bin
-            mv $TOOL_NAME ~/.local/bin/$TOOL_NAME
-            chmod +x ~/.local/bin/$TOOL_NAME
-            echo "Installed $TOOL_NAME to ~/.local/bin"
+            chmod +x $TOOL_NAME
+            sudo mv $TOOL_NAME /usr/local/bin/$TOOL_NAME
+            echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
       
           sudo apt-get update && sudo apt-get install -y jq
