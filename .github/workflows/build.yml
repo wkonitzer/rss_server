@@ -42,9 +42,19 @@ jobs:
           install_latest_release melange chainguard-dev/melange
           install_latest_release apko chainguard-dev/apko
       
-          # Verify install
-          which melange && melange --version
-          which apko && apko --version
+          echo "Verifying melange..."
+          if ! command -v melange >/dev/null; then
+            echo "❌ melange not found in PATH"
+            exit 1
+          fi
+          melange --version || echo "⚠️ melange version check failed"
+      
+          echo "Verifying apko..."
+          if ! command -v apko >/dev/null; then
+            echo "❌ apko not found in PATH"
+            exit 1
+          fi
+          apko --version || echo "⚠️ apko version check failed"
 
       - name: Build all Python packages with melange
         run: |
