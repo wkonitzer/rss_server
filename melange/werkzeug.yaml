@@ -1,0 +1,27 @@
+package:
+  name: py3-werkzeug
+  version: latest
+  epoch: 0
+  description: "Python package Werkzeug"
+  target-architecture:
+    - x86_64
+    - aarch64
+
+environment:
+  contents:
+    packages:
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - gcc
+      - musl-dev
+
+pipeline:
+  - runs: |
+      pip wheel Werkzeug --wheel-dir /package
+      pip install --no-index --find-links=/package Werkzeug --target=/app
+
+data:
+  paths:
+    - path: /app

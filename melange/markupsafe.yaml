@@ -1,0 +1,27 @@
+package:
+  name: py3-markupsafe
+  version: latest
+  epoch: 0
+  description: "Python package MarkupSafe"
+  target-architecture:
+    - x86_64
+    - aarch64
+
+environment:
+  contents:
+    packages:
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - gcc
+      - musl-dev
+
+pipeline:
+  - runs: |
+      pip wheel MarkupSafe --wheel-dir /package
+      pip install --no-index --find-links=/package MarkupSafe --target=/app
+
+data:
+  paths:
+    - path: /app

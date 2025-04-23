@@ -1,0 +1,27 @@
+package:
+  name: py3-lxml
+  version: latest
+  epoch: 0
+  description: "Python package lxml"
+  target-architecture:
+    - x86_64
+    - aarch64
+
+environment:
+  contents:
+    packages:
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - gcc
+      - musl-dev
+
+pipeline:
+  - runs: |
+      pip wheel lxml --wheel-dir /package
+      pip install --no-index --find-links=/package lxml --target=/app
+
+data:
+  paths:
+    - path: /app

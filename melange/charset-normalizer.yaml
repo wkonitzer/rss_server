@@ -1,0 +1,27 @@
+package:
+  name: py3-charset-normalizer
+  version: latest
+  epoch: 0
+  description: "Python package charset-normalizer"
+  target-architecture:
+    - x86_64
+    - aarch64
+
+environment:
+  contents:
+    packages:
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - gcc
+      - musl-dev
+
+pipeline:
+  - runs: |
+      pip wheel charset-normalizer --wheel-dir /package
+      pip install --no-index --find-links=/package charset-normalizer --target=/app
+
+data:
+  paths:
+    - path: /app

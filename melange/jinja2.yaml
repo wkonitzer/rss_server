@@ -1,0 +1,27 @@
+package:
+  name: py3-jinja2
+  version: latest
+  epoch: 0
+  description: "Python package Jinja2"
+  target-architecture:
+    - x86_64
+    - aarch64
+
+environment:
+  contents:
+    packages:
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - gcc
+      - musl-dev
+
+pipeline:
+  - runs: |
+      pip wheel Jinja2 --wheel-dir /package
+      pip install --no-index --find-links=/package Jinja2 --target=/app
+
+data:
+  paths:
+    - path: /app

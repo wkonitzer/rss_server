@@ -1,0 +1,27 @@
+package:
+  name: py3-six
+  version: latest
+  epoch: 0
+  description: "Python package six"
+  target-architecture:
+    - x86_64
+    - aarch64
+
+environment:
+  contents:
+    packages:
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - gcc
+      - musl-dev
+
+pipeline:
+  - runs: |
+      pip wheel six --wheel-dir /package
+      pip install --no-index --find-links=/package six --target=/app
+
+data:
+  paths:
+    - path: /app

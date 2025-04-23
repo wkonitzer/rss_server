@@ -1,0 +1,54 @@
+name: Build Modular RSS Server Image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apk-tools curl
+
+      - name: Set up Chainguard tools (melange + apko)
+        run: |
+          curl -LO https://github.com/chainguard-dev/melange/releases/latest/download/melange-linux-amd64
+          chmod +x melange-linux-amd64 && sudo mv melange-linux-amd64 /usr/local/bin/melange
+
+          curl -LO https://github.com/chainguard-dev/apko/releases/latest/download/apko-linux-amd64
+          chmod +x apko-linux-amd64 && sudo mv apko-linux-amd64 /usr/local/bin/apko
+
+      - name: Build all Python packages with melange
+        run: |
+          mkdir -p packages
+          for arch in x86_64 aarch64; do
+            for f in .github/melange/*.yaml; do
+              melange build $f --arch $arch --out-dir packages/$arch --signing-key .github/melange/melange.rsa || true
+            done
+          done
+
+      - name: Build image with apko
+        run: |
+          apko build .github/apko/apko.yaml rss-server.tar
+          docker load < rss-server.tar
+
+      - name: Push to GitHub Container Registry
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag rss-server ghcr.io/${{ github.repository_owner }}/rss-server:latest
+          docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest

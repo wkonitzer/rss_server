@@ -1,0 +1,27 @@
+package:
+  name: py3-pluggy
+  version: latest
+  epoch: 0
+  description: "Python package pluggy"
+  target-architecture:
+    - x86_64
+    - aarch64
+
+environment:
+  contents:
+    packages:
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - gcc
+      - musl-dev
+
+pipeline:
+  - runs: |
+      pip wheel pluggy --wheel-dir /package
+      pip install --no-index --find-links=/package pluggy --target=/app
+
+data:
+  paths:
+    - path: /app
