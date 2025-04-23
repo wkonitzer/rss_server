@@ -39,7 +39,7 @@ jobs:
               exit 1
             fi
             
-            sudo install -m 0755 $TOOL_NAME /usr/local/bin/$TOOL_NAME
+            sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
       
