@@ -79,13 +79,15 @@ jobs:
           mkdir -p packages
           for arch in x86_64 aarch64; do
             for f in melange/*.yaml; do
+              echo "Building $f"
+              cat $f | nl
               melange build $f --arch $arch --out-dir packages/$arch --signing-key melange/melange.rsa || true
             done
           done
 
       - name: Build container image with apko
         run: |
-          apko build .github/apko/apko.yaml rss-server.tar
+          apko build apko/apko.yaml rss-server.tar
           docker load < rss-server.tar
 
       - name: Push to GitHub Container Registry
