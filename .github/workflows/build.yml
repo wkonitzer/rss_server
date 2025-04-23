@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install latest melange, apko and bubblewrap
+      - name: Install latest melange and apko
         run: |
           install_latest_release() {
             TOOL_NAME=$1
@@ -43,7 +43,7 @@ jobs:
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
       
-          sudo apt-get update && sudo apt-get install -y jq bubblewrap
+          sudo apt-get update && sudo apt-get install -y jq
       
           install_latest_release melange chainguard-dev/melange
           install_latest_release apko chainguard-dev/apko
@@ -81,7 +81,7 @@ jobs:
             for f in melange/*.yaml; do
               echo "Building $f"
               cat $f | nl
-              melange build $f --arch $arch --out-dir packages/$arch --signing-key melange/melange.rsa || true
+              melange build $f --arch $arch --out-dir packages/$arch --signing-key melange/melange.rsa --runner docker || true
             done
           done
 
