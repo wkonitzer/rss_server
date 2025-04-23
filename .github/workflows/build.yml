@@ -43,7 +43,7 @@ jobs:
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
       
-          sudo apt-get update && sudo apt-get install -y jq docker.io
+          sudo apt-get update && sudo apt-get install -y jq
       
           install_latest_release melange chainguard-dev/melange
           install_latest_release apko chainguard-dev/apko
