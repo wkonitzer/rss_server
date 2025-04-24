@@ -112,29 +112,46 @@ jobs:
           mkdir -p app
           cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py app/
 
+      - name: Debug: list files and check index
+        run: |
+          echo "📁 Current working directory:"
+          pwd
+
+          echo "📄 Listing contents of ./packages:"
+          ls -lh packages || true
+
+          echo "📄 Listing contents of ./packages/x86_64:"
+          ls -lh packages/x86_64 || true
+
+          echo "📄 Showing APKINDEX.tar.gz if it exists:"
+          file packages/x86_64/APKINDEX.tar.gz || echo "❌ APKINDEX not found"
+
+          echo "📄 Showing package files:"
+          find packages/x86_64 -type f -name '*.apk' || echo "❌ No .apk files found"          
+
       - name: Build container images for both archs with apko
         run: |
           apko build --arch x86_64 apko/apko.yaml rss-server rss-server-amd64.tar
-          apko build --arch aarch64 apko/apko.yaml rss-server rss-server-arm64.tar
+          #apko build --arch aarch64 apko/apko.yaml rss-server rss-server-arm64.tar
 
       - name: Load and tag both images
         run: |
           docker load < rss-server-amd64.tar
           docker tag rss-server ghcr.io/${{ github.repository_owner }}/rss-server:amd64
 
-          docker load < rss-server-arm64.tar
-          docker tag rss-server ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+          #docker load < rss-server-arm64.tar
+          #docker tag rss-server ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
       - name: Push individual architecture images
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push ghcr.io/${{ github.repository_owner }}/rss-server:amd64
-          docker push ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+          #docker push ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
       - name: Create and push multi-arch manifest
         run: |
           docker manifest create ghcr.io/${{ github.repository_owner }}/rss-server:latest \
             ghcr.io/${{ github.repository_owner }}/rss-server:amd64 \
-            ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+            #ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
           docker manifest push ghcr.io/${{ github.repository_owner }}/rss-server:latest
