@@ -29,7 +29,7 @@ pipeline:
   - name: Build feedgen wheel
     runs: |
       pip wheel feedgen --wheel-dir /package
-      pip install --no-index --find-links=/package feedgen --prefix "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package feedgen --prefix "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do
@@ -39,3 +39,7 @@ pipeline:
           rm -rf "${{targets.destdir}}/$dir"
         fi
       done
+
+dependencies:
+  runtime:
+    - py3-lxml      
