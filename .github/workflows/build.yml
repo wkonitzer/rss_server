@@ -135,7 +135,7 @@ jobs:
         run: |
           echo "📦 Listing packages in APKINDEX:"
           if [ -f packages/x86_64/APKINDEX.tar.gz ]; then
-            tar -xOzf packages/x86_64/APKINDEX.tar.gz APKINDEX | grep '^P:' || echo "❌ No packages found in APKINDEX"
+            tar -xOzf packages/x86_64/APKINDEX.tar.gz APKINDEX | cat || echo "❌ No packages found in APKINDEX"
           else
             echo "❌ APKINDEX.tar.gz not found!"
           fi                  
