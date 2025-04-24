@@ -4,6 +4,9 @@ archs:
 contents:
   repositories:
     - '@local file:///github/workspace/packages'
+    - https://packages.wolfi.dev/os
+  keyring:
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub    
   packages:
     - '@local py3-apscheduler'
     - '@local py3-beautifulsoup4'
@@ -36,7 +39,8 @@ contents:
     - '@local py3-werkzeug'
     - python3
 
-entrypoint: ["python", "-m", "gunicorn", "--preload", "-w", "1", "-b", "0.0.0.0:4000", "app:app"]
+entrypoint: 
+  command: python -m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app
 
 work-dir: /app
 
@@ -46,6 +50,3 @@ accounts:
 paths:
   - path: /app
     permissions: 755
-
-ports:
-  - 4000
