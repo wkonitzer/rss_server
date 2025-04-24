@@ -107,6 +107,11 @@ jobs:
           find melange -name '*.yaml' | parallel -j 4 'melange build {} --arch x86_64 --out-dir packages/x86_64 --signing-key melange/melange.rsa --runner docker || true'
           find melange -name '*.yaml' | parallel -j 1 'melange build {} --arch aarch64 --out-dir packages/aarch64 --signing-key melange/melange.rsa --runner docker || true'
 
+      - name: Index built packages for apko
+        run: |
+          melange index --output packages/x86_64 packages/x86_64
+          melange index --output packages/aarch64 packages/aarch64          
+
       - name: Copy application source into /app
         run: |
           mkdir -p app
