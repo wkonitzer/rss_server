@@ -36,9 +36,7 @@ contents:
     - '@local py3-werkzeug'
     - python3
 
-entrypoint:
-  command: ["python"]
-  args: ["-m", "gunicorn", "--preload", "-w", "1", "-b", "0.0.0.0:4000", "app:app", "--access-logfile", "-", "--access-logformat", "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -" ]
+entrypoint: ["python", "-m", "gunicorn", "--preload", "-w", "1", "-b", "0.0.0.0:4000", "app:app"]
 
 work-dir: /app
 
@@ -49,5 +47,5 @@ paths:
   - path: /app
     permissions: 755
 
-expose-ports:
+ports:
   - 4000
