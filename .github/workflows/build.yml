@@ -131,7 +131,7 @@ jobs:
 
       - name: Build container images for both archs with apko
         run: |
-          apko build --arch x86_64 --extra-repository '@local file://$(pwd)/packages' apko/apko.yaml rss-server rss-server-amd64.tar
+          apko build --arch x86_64 apko/apko.yaml rss-server rss-server-amd64.tar
           #apko build --arch aarch64 apko/apko.yaml rss-server rss-server-arm64.tar
 
       - name: Load and tag both images
