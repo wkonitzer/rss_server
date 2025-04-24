@@ -8,6 +8,9 @@ package:
     - aarch64
   copyright:
     - license: BSD-3-Clause
+  dependencies:
+    runtime:
+      - py3-markupsafe    
 
 environment:
   contents:
@@ -29,7 +32,7 @@ pipeline:
   - name: Build jinja2 wheel
     runs: |
       pip wheel jinja2 --wheel-dir /package
-      pip install --no-index --find-links=/package jinja2 --prefix "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package Jinja2 --prefix "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do
