@@ -8,6 +8,9 @@ package:
     - aarch64
   copyright:
     - license: MIT
+  dependencies:
+    runtime:
+      - py3-lxml    
 
 environment:
   contents:
@@ -38,8 +41,4 @@ pipeline:
           mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
           rm -rf "${{targets.destdir}}/$dir"
         fi
-      done
-
-dependencies:
-  runtime:
-    - py3-lxml      
+      done     
