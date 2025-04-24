@@ -112,7 +112,7 @@ jobs:
           mkdir -p app
           cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py app/
 
-      - name: Debug: list files and check index
+      - name: list files and check index
         run: |
           echo "📁 Current working directory:"
           pwd
