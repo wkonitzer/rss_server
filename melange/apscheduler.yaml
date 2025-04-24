@@ -1,6 +1,6 @@
 package:
   name: py3-apscheduler
-  version: latest
+  version: 3.11.0
   epoch: 0
   description: "Python package apscheduler"
   target-architecture:

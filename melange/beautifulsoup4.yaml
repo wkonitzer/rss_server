@@ -1,6 +1,6 @@
 package:
   name: py3-beautifulsoup4
-  version: latest
+  version: 4.13.4
   epoch: 0
   description: "Python package beautifulsoup4"
   target-architecture:
