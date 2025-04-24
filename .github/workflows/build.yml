@@ -129,7 +129,16 @@ jobs:
           echo "📄 Showing package files:"
           find packages/x86_64 -type f -name '*.apk' || echo "❌ No .apk files found" 
 
-          ls -lah /home/runner/work/rss_server/rss_server/packages/x86_64/APKINDEX.tar.gz || echo "❌ Not found"         
+          ls -lah /home/runner/work/rss_server/rss_server/packages/x86_64/APKINDEX.tar.gz || echo "❌ Not found" 
+
+      - name: 🔍 Show contents of APKINDEX.tar.gz
+        run: |
+          echo "📦 Listing packages in APKINDEX:"
+          if [ -f packages/x86_64/APKINDEX.tar.gz ]; then
+            tar -xOzf packages/x86_64/APKINDEX.tar.gz APKINDEX | grep '^P:' || echo "❌ No packages found in APKINDEX"
+          else
+            echo "❌ APKINDEX.tar.gz not found!"
+          fi                  
 
       - name: Build container images for both archs with apko
         run: |
