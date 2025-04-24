@@ -11,6 +11,33 @@ contents:
   packages:
     - py3-apscheduler@local
     - py3-beautifulsoup4@local
+    - py3-blinker@local
+    - py3-certifi@local
+    - py3-charset-normalizer@local
+    - py3-click@local
+    - py3-feedgen@local
+    - py3-feedgenerator@local
+    - py3-flask@local
+    - py3-gunicorn@local
+    - py3-idna@local
+    - py3-iniconfig@local
+    - py3-itsdangerous@local
+    - py3-jinja2@local
+    - py3-lxml@local
+    - py3-markupsafe@local
+    - py3-packaging@local
+    - py3-pluggy@local
+    - py3-prometheus-client@local
+    - py3-prometheus-flask-exporter@local
+    - py3-python-dateutil@local
+    - py3-pytz@local
+    - py3-pyyaml@local
+    - py3-requests@local
+    - py3-six@local
+    - py3-soupsieve@local
+    - py3-tzlocal@local
+    - py3-urllib3@local
+    - py3-werkzeug@local
     - python3
 
 entrypoint: 
