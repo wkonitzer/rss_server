@@ -109,8 +109,8 @@ jobs:
 
       - name: Index built packages for apko
         run: |
-          melange index --output packages/x86_64 packages/x86_64
-          melange index --output packages/aarch64 packages/aarch64          
+          melange index packages/x86_64
+          melange index packages/aarch64          
 
       - name: Copy application source into /app
         run: |
