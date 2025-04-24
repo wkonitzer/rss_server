@@ -9,8 +9,8 @@ contents:
     - melange/melange.rsa.pub
     - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub    
   packages:
-    - 'py3-apscheduler@local'
-    - 'py3-beautifulsoup4@local'
+    - '@local py3-apscheduler'
+    - '@local py3-beautifulsoup4'
     - python3
 
 entrypoint: 
