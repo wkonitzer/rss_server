@@ -39,3 +39,10 @@ pipeline:
           rm -rf "${{targets.destdir}}/$dir"
         fi
       done
+
+  - name: Cleanup unnecessary Python artifacts
+    runs: |
+      find "\${{targets.destdir}}" -name '*.pyc' -delete
+      find "\${{targets.destdir}}" -name '*.pyo' -delete
+      find "\${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
+      find "\${{targets.destdir}}" -name '*.dist-info' -type d -exec rm -rf {} +

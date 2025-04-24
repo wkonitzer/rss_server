@@ -131,7 +131,7 @@ jobs:
 
           ls -lah /home/runner/work/rss_server/rss_server/packages/x86_64/APKINDEX.tar.gz || echo "❌ Not found" 
 
-      - name: 🔍 Show contents of APKINDEX.tar.gz
+      - name: Show contents of APKINDEX.tar.gz
         run: |
           echo "📦 Listing packages in APKINDEX:"
           if [ -f packages/x86_64/APKINDEX.tar.gz ]; then
@@ -152,6 +152,26 @@ jobs:
 
           #docker load < rss-server-arm64.tar
           #docker tag rss-server:latest-arm64 ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+
+      - name: Test x86_64 container
+        run: |
+          CONTAINER_ID=$(docker run -d --platform=linux/amd64 rss-server:latest-amd64)
+          echo "🟡 Waiting for logs..."
+          sleep 5
+          echo "📜 Container logs:"
+          docker logs $CONTAINER_ID
+          echo "🛑 Stopping container"
+          docker rm -f $CONTAINER_ID
+
+      #- name: Test arm64 container
+      #  run: |
+      #    CONTAINER_ID=$(docker run -d --platform=linux/arm64 rss-server:latest-arm64)
+      #    echo "🟡 Waiting for logs..."
+      #    sleep 5
+      #    echo "📜 Container logs:"
+      #    docker logs $CONTAINER_ID
+      #    echo "🛑 Stopping container"
+      #    docker rm -f $CONTAINER_ID
 
       - name: Push individual architecture images
         run: |
