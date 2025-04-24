@@ -142,20 +142,17 @@ jobs:
 
       - name: Build container images for both archs with apko
         run: |
-          APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml rss-server rss-server-amd64.tar
-          #apko build --arch aarch64 apko/apko.yaml rss-server rss-server-arm64.tar
+          APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${GITHUB_REPOSITORY_OWNER}/rss-server:amd64 rss-server-amd64.tar
+          #APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${GITHUB_REPOSITORY_OWNER}/rss-server:arm64 rss-server-arm64.tar
 
       - name: Load and tag both images
         run: |
           docker load < rss-server-amd64.tar
-          docker tag rss-server:latest-amd64 ghcr.io/${{ github.repository_owner }}/rss-server:amd64
-
           #docker load < rss-server-arm64.tar
-          #docker tag rss-server:latest-arm64 ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
       - name: Test x86_64 container
         run: |
-          CONTAINER_ID=$(docker run -d --platform=linux/amd64 rss-server:latest-amd64)
+          CONTAINER_ID=$(docker run -d --platform=linux/amd64 rss-server:amd64)
           echo "🟡 Waiting for logs..."
           sleep 5
           echo "📜 Container logs:"
@@ -165,7 +162,7 @@ jobs:
 
       #- name: Test arm64 container
       #  run: |
-      #    CONTAINER_ID=$(docker run -d --platform=linux/arm64 rss-server:latest-arm64)
+      #    CONTAINER_ID=$(docker run -d --platform=linux/arm64 rss-server:arm64)
       #    echo "🟡 Waiting for logs..."
       #    sleep 5
       #    echo "📜 Container logs:"
@@ -177,12 +174,12 @@ jobs:
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push ghcr.io/${{ github.repository_owner }}/rss-server:amd64
-          #docker push ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+          docker push ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
       - name: Create and push multi-arch manifest
         run: |
           docker manifest create ghcr.io/${{ github.repository_owner }}/rss-server:latest \
             --amend ghcr.io/${{ github.repository_owner }}/rss-server:amd64 \
-            #--amend ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+            --amend ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
           docker manifest push ghcr.io/${{ github.repository_owner }}/rss-server:latest
