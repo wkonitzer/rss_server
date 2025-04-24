@@ -142,8 +142,8 @@ jobs:
 
       - name: Build container images for both archs with apko
         run: |
-          APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${GITHUB_REPOSITORY_OWNER}/rss-server:amd64 rss-server-amd64.tar
-          #APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${GITHUB_REPOSITORY_OWNER}/rss-server:arm64 rss-server-arm64.tar
+          APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
+          #APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-arm64.tar
 
       - name: Load and tag both images
         run: |
@@ -152,7 +152,7 @@ jobs:
 
       - name: Test x86_64 container
         run: |
-          CONTAINER_ID=$(docker run -d --platform=linux/amd64 rss-server:amd64)
+          CONTAINER_ID=$(docker run -d --platform=linux/amd64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64)
           echo "🟡 Waiting for logs..."
           sleep 5
           echo "📜 Container logs:"
@@ -162,7 +162,7 @@ jobs:
 
       #- name: Test arm64 container
       #  run: |
-      #    CONTAINER_ID=$(docker run -d --platform=linux/arm64 rss-server:arm64)
+      #    CONTAINER_ID=$(docker run -d --platform=linux/arm64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64)
       #    echo "🟡 Waiting for logs..."
       #    sleep 5
       #    echo "📜 Container logs:"
