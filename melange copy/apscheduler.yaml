@@ -1,0 +1,41 @@
+package:
+  name: py3-apscheduler
+  version: latest
+  epoch: 0
+  description: "Python package apscheduler"
+  target-architecture:
+    - x86_64
+    - aarch64
+  copyright:
+    - license: MIT
+
+environment:
+  contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    packages:
+      - busybox
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - build-base
+
+pipeline:
+  - name: Build apscheduler wheel
+    runs: |
+      pip wheel apscheduler --wheel-dir /package
+      pip install --no-index --find-links=/package apscheduler --prefix "${{targets.destdir}}"
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
