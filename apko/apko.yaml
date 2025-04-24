@@ -23,4 +23,5 @@ accounts:
 
 paths:
   - path: /app
+    type: directory
     permissions: 755
