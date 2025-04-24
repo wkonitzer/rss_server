@@ -148,10 +148,10 @@ jobs:
       - name: Load and tag both images
         run: |
           docker load < rss-server-amd64.tar
-          docker tag rss-server ghcr.io/${{ github.repository_owner }}/rss-server:amd64
+          docker tag rss-server:latest-amd64 ghcr.io/${{ github.repository_owner }}/rss-server:amd64
 
           #docker load < rss-server-arm64.tar
-          #docker tag rss-server ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+          #docker tag rss-server:latest-arm64 ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
       - name: Push individual architecture images
         run: |
@@ -162,7 +162,7 @@ jobs:
       - name: Create and push multi-arch manifest
         run: |
           docker manifest create ghcr.io/${{ github.repository_owner }}/rss-server:latest \
-            ghcr.io/${{ github.repository_owner }}/rss-server:amd64 \
-            #ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+            --amend ghcr.io/${{ github.repository_owner }}/rss-server:amd64 \
+            #--amend ghcr.io/${{ github.repository_owner }}/rss-server:arm64
 
           docker manifest push ghcr.io/${{ github.repository_owner }}/rss-server:latest
