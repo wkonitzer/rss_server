@@ -48,6 +48,13 @@ work-dir: /app
 accounts:
   run-as: nonroot
 
+accounts:
+  users:
+    - username: nonroot
+      uid: 65532
+      shell: /sbin/nologin
+  run-as: nonroot  
+
 paths:
   - path: /app
     type: directory
