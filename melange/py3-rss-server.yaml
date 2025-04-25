@@ -34,20 +34,16 @@ pipeline:
 
       mkdir -p /src
 
-      cat > /src/pyproject.toml <<EOF
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-EOF
+      echo '[build-system]' > /src/pyproject.toml
+      echo 'requires = ["setuptools", "wheel"]' >> /src/pyproject.toml
+      echo 'build-backend = "setuptools.build_meta"' >> /src/pyproject.toml
 
-      cat > /src/setup.cfg <<EOF
-[metadata]
-name = rss-server
-version = 1.0.0
-
-[options]
-packages = find:
-EOF
+      echo '[metadata]' > /src/setup.cfg
+      echo 'name = rss-server' >> /src/setup.cfg
+      echo 'version = 1.0.13' >> /src/setup.cfg
+      echo '' >> /src/setup.cfg
+      echo '[options]' >> /src/setup.cfg
+      echo 'packages = find:' >> /src/setup.cfg
 
       cd /src
       python3 -m pip wheel . --wheel-dir /package
