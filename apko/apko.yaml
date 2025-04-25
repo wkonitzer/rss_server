@@ -10,20 +10,20 @@ archs:
   - aarch64
 contents:
   repositories:
-    - '@local packages'
+    - '@local ./packages'
     - https://packages.wolfi.dev/os
   keyring:
     - melange/melange.rsa.pub
     - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub    
   packages:
-    - py3-apscheduler
+    - py3-apscheduler@local
     - py3-beautifulsoup4
     - py3-blinker
     - py3-certifi
     - py3-charset-normalizer
     - py3-click
-    - py3-feedgen
-    - py3-feedgenerator
+    - py3-feedgen@local
+    - py3-feedgenerator@local
     - py3-flask
     - py3-gunicorn
     - py3-idna
@@ -35,7 +35,7 @@ contents:
     - py3-packaging
     - py3-pluggy
     - py3-prometheus-client
-    - py3-prometheus-flask-exporter
+    - py3-prometheus-flask-exporter@local
     - py3-python-dateutil
     - py3-pytz
     - py3-pyyaml
