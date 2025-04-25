@@ -1,5 +1,9 @@
 name: Build Modular RSS Server Image
 
+permissions:
+  contents: read
+  packages: write
+
 on:
   push:
     branches:
@@ -9,9 +13,6 @@ on:
 jobs:
   build-amd64:
     runs-on: ubuntu-latest   
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -138,9 +139,6 @@ jobs:
 
   build-arm64:
     runs-on: ubuntu-24.04-arm   
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -211,7 +209,7 @@ jobs:
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' | parallel -j 1 'melange build {} --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
+          find melange -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
 
       - name: list files and check index
         run: |
@@ -222,21 +220,21 @@ jobs:
           ls -lh packages || true
 
           echo "📄 Listing contents of ./packages/x86_64:"
-          ls -lh packages/x86_64 || true
+          ls -lh packages/aarch64 || true
 
           echo "📄 Showing APKINDEX.tar.gz if it exists:"
-          file packages/x86_64/APKINDEX.tar.gz || echo "❌ APKINDEX not found"
+          file packages/aarch64/APKINDEX.tar.gz || echo "❌ APKINDEX not found"
 
           echo "📄 Showing package files:"
-          find packages/x86_64 -type f -name '*.apk' || echo "❌ No .apk files found" 
+          find packages/aarch64 -type f -name '*.apk' || echo "❌ No .apk files found" 
 
-          ls -lah /home/runner/work/rss_server/rss_server/packages/x86_64/APKINDEX.tar.gz || echo "❌ Not found" 
+          ls -lah /home/runner/work/rss_server/rss_server/packages/aarch64/APKINDEX.tar.gz || echo "❌ Not found" 
 
       - name: Show contents of APKINDEX.tar.gz
         run: |
           echo "📦 Listing packages in APKINDEX:"
-          if [ -f packages/x86_64/APKINDEX.tar.gz ]; then
-            tar -xOzf packages/x86_64/APKINDEX.tar.gz APKINDEX | cat || echo "❌ No packages found in APKINDEX"
+          if [ -f packages/aarch64/APKINDEX.tar.gz ]; then
+            tar -xOzf packages/aarch64/APKINDEX.tar.gz APKINDEX | cat || echo "❌ No packages found in APKINDEX"
           else
             echo "❌ APKINDEX.tar.gz not found!"
           fi                  
