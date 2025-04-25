@@ -10,4 +10,8 @@ environment:
       - python-3.11
       - python-3.12
       - python-3.13
+      - py3-supported-python
+      - py3-supported-pip
+      - py3-setuptools
+      - py3-supported-wheel
 
