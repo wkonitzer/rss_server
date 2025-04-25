@@ -26,10 +26,10 @@ jobs:
 
       - name: Vendor Wolfi python pipelines
         run: |
-          mkdir -p melange/pipelines/py
-          cp -R wolfi-os/pipelines/py/* melange/pipelines/py/  
+          mkdir -p pipelines/py
+          cp -R wolfi-os/pipelines/py/* pipelines/py/  
 
-          ls -l melange/pipelines/py || true        
+          ls -l pipelines/py || true        
 
       - name: Install latest melange and apko
         run: |
