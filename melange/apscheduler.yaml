@@ -29,8 +29,7 @@ pipeline:
 
   - uses: apk/add
     with:
-      packages:
-        - build-base      
+      packages: build-base      
 
 subpackages:
   - range: py-versions
