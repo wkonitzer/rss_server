@@ -26,38 +26,26 @@ environment:
       - build-base
 
 pipeline:
-  - name: Prepare build context
+  - name: Write Python project files into the source dir
     runs: |
-      mkdir -p "${{targets.contextdir}}"
-      
-      cp \
-        "${{package.srcdir}}"/app.py \
-        "${{package.srcdir}}"/get_latest_release.py \
-        "${{package.srcdir}}"/config.py \
-        "${{package.srcdir}}"/fetch_functions.py \
-        "${{package.srcdir}}"/product_utils.py \
-        "${{targets.contextdir}}"/
+      # write pyproject.toml next to your .py files
+      echo "[build-system]" > "${{package.srcdir}}/pyproject.toml"
+      echo "requires = [\"setuptools\", \"wheel\"]" >> "${{package.srcdir}}/pyproject.toml"
+      echo "build-backend = \"setuptools.build_meta\"" >> "${{package.srcdir}}/pyproject.toml"
 
-      # build-system metadata
-      echo "[build-system]" > "${{targets.contextdir}}/pyproject.toml"
-      echo "requires = [\"setuptools\", \"wheel\"]" >> "${{targets.contextdir}}/pyproject.toml"
-      echo "build-backend = \"setuptools.build_meta\"" >> "${{targets.contextdir}}/pyproject.toml"
+      # write setup.cfg next to them as well
+      echo "[metadata]" > "${{package.srcdir}}/setup.cfg"
+      echo "name = rss-server" >> "${{package.srcdir}}/setup.cfg"
+      echo "version = 1.0.13" >> "${{package.srcdir}}/setup.cfg"
 
-      # package metadata & modules list
-      echo "[metadata]" > "${{targets.contextdir}}/setup.cfg"
-      echo "name = rss-server" >> "${{targets.contextdir}}/setup.cfg"
-      echo "version = 1.0.13" >> "${{targets.contextdir}}/setup.cfg"
-      echo "" >> "${{targets.contextdir}}/setup.cfg"
-      echo "[options]" >> "${{targets.contextdir}}/setup.cfg"
-      echo "py_modules =" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    app" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    get_latest_release" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    config" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    fetch_functions" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    product_utils" >> "${{targets.contextdir}}/setup.cfg"
-      echo "" >> "${{targets.contextdir}}/setup.cfg"
-      echo "install_requires =" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    # add runtime deps here, e.g. requests" >> "${{targets.contextdir}}/setup.cfg"
+      echo "" >> "${{package.srcdir}}/setup.cfg"
+      echo "[options]" >> "${{package.srcdir}}/setup.cfg"
+      echo "py_modules =" >> "${{package.srcdir}}/setup.cfg"
+      echo "    app" >> "${{package.srcdir}}/setup.cfg"
+      echo "    get_latest_release" >> "${{package.srcdir}}/setup.cfg"
+      echo "    config" >> "${{package.srcdir}}/setup.cfg"
+      echo "    fetch_functions" >> "${{package.srcdir}}/setup.cfg"
+      echo "    product_utils" >> "${{package.srcdir}}/setup.cfg"
 
   - uses: python/build-wheel
 
