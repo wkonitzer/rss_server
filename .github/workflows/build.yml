@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-amd64:
     runs-on: ubuntu-latest   
     permissions:
       contents: read
@@ -16,11 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Set up QEMU for ARM64 builds
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: all
 
       - name: Install latest melange and apko
         run: |
@@ -87,8 +82,7 @@ jobs:
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
-          find melange -name '*.yaml' | parallel -j 1 'melange build {} --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
+          find melange -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                          
 
       - name: list files and check index
         run: |
@@ -121,12 +115,10 @@ jobs:
       - name: Build container images for both archs with apko
         run: |
           APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
-          APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-arm64.tar
 
       - name: Load and tag both images
         run: |
           docker load < rss-server-amd64.tar
-          docker load < rss-server-arm64.tar
 
       - name: Test x86_64 container
         run: |
@@ -138,26 +130,154 @@ jobs:
           echo "🛑 Stopping container"
           docker rm -f $CONTAINER_ID
 
+      - name: Push individual architecture images
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64
+
+
+  build-arm64:
+    runs-on: ubuntu-latest   
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install latest melange and apko
+        run: |
+          install_latest_release() {
+            TOOL_NAME=$1
+            GH_REPO=$2
+            ARCH="linux_arm64"
+      
+            echo "Fetching latest release for $TOOL_NAME..."
+            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
+            TARBALL="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
+            URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${TARBALL}"
+      
+            echo "Downloading $TOOL_NAME from $URL"
+            curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
+            tar -xzf ${TOOL_NAME}.tar.gz
+
+            BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n 1)
+            if [ -z "$BINARY_PATH" ]; then
+              echo "❌ Could not find binary '$TOOL_NAME' in archive"
+              exit 1
+            fi
+            
+            sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+            echo "✅ Installed $TOOL_NAME to /usr/local/bin"
+          }
+      
+          sudo apt-get update && sudo apt-get install -y jq
+      
+          install_latest_release melange chainguard-dev/melange
+          install_latest_release apko chainguard-dev/apko
+
+      - name: Verify CLI tools
+        run: |
+          echo "Listing /usr/local/bin:"
+          ls -lah /usr/local/bin
+
+          echo "PATH is: $PATH"
+          env | grep PATH
+          
+          echo "Verifying melange..."
+          if ! command -v melange >/dev/null; then
+            echo "❌ melange not found in PATH"
+            exit 1
+          fi
+          melange version
+      
+          echo "Verifying apko..."
+          if ! command -v apko >/dev/null; then
+            echo "❌ apko not found in PATH"
+            exit 1
+          fi
+          apko version
+
+      - name: Generate signing key for this build
+        run: |
+          melange keygen melange/melange.rsa
+
+      - name: Remove melange build cache
+        run: rm -rf ./melange-cache/                  
+
+      - name: Build all Python packages with melange
+        run: |
+          sudo apt-get install -y parallel
+          mkdir -p packages/x86_64 packages/aarch64
+
+          find melange -name '*.yaml' | parallel -j 1 'melange build {} --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
+
+      - name: list files and check index
+        run: |
+          echo "📁 Current working directory:"
+          pwd
+
+          echo "📄 Listing contents of ./packages:"
+          ls -lh packages || true
+
+          echo "📄 Listing contents of ./packages/x86_64:"
+          ls -lh packages/x86_64 || true
+
+          echo "📄 Showing APKINDEX.tar.gz if it exists:"
+          file packages/x86_64/APKINDEX.tar.gz || echo "❌ APKINDEX not found"
+
+          echo "📄 Showing package files:"
+          find packages/x86_64 -type f -name '*.apk' || echo "❌ No .apk files found" 
+
+          ls -lah /home/runner/work/rss_server/rss_server/packages/x86_64/APKINDEX.tar.gz || echo "❌ Not found" 
+
+      - name: Show contents of APKINDEX.tar.gz
+        run: |
+          echo "📦 Listing packages in APKINDEX:"
+          if [ -f packages/x86_64/APKINDEX.tar.gz ]; then
+            tar -xOzf packages/x86_64/APKINDEX.tar.gz APKINDEX | cat || echo "❌ No packages found in APKINDEX"
+          else
+            echo "❌ APKINDEX.tar.gz not found!"
+          fi                  
+
+      - name: Build container images for both archs with apko
+        run: |
+          APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-arm64.tar
+
+      - name: Load and tag both images
+        run: |
+          docker load < rss-server-arm64.tar
+
       - name: Test arm64 container
         run: |
           CONTAINER_ID=$(docker run -d --platform=linux/arm64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64)
           echo "🟡 Waiting for logs..."
           sleep 5
           echo "📜 Container logs:"
-          docker logs -f $CONTAINER_ID
+          docker logs $CONTAINER_ID
           echo "🛑 Stopping container"
           docker rm -f $CONTAINER_ID
 
       - name: Push individual architecture images
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64
           docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
 
-      - name: Create and push multi-arch manifest
-        run: |
-          docker manifest create ghcr.io/${{ github.repository_owner }}/rss-server:latest \
-            --amend ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64 \
-            --amend ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
+  manifest:
+    needs: [build-amd64, build-arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-          docker manifest push ghcr.io/${{ github.repository_owner }}/rss-server:latest
+      - name: Merge into multi-arch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ github.repository_owner }}/rss-server:latest \
+            ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64 \
+            ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64        
