@@ -46,13 +46,10 @@ jobs:
             LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest \
               | jq -r '.tag_name')
 
-            # The asset names differ slightly between repos:
-            #  - apko, melange: tarball named TOOL_LATEST_ARCH.tar.gz
-            #  - yq: single binary named yq_linux_amd64 (no .tar.gz)
             if [ "$TOOL_NAME" = "yq" ]; then
               ASSET="yq_${ARCH}"
               URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
-              OUT="$TOOL_NAME"
+              OUT="${ASSET}"
             else
               ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
               URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
@@ -63,12 +60,12 @@ jobs:
             curl -sL "$URL" -o "$OUT"
 
             if [ "$TOOL_NAME" = "yq" ]; then
-              chmod +x yq_${ARCH}
-              sudo install -m 0755 yq_${ARCH} /usr/local/bin/yq
+              chmod +x "${OUT}"
+              sudo install -m0755 "${OUT}" /usr/local/bin/yq
             else
               tar -xzf "$OUT"
               BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n1)
-              sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+              sudo install -m0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
             fi
 
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
@@ -208,19 +205,16 @@ jobs:
           install_latest_release() {
             TOOL_NAME=$1
             GH_REPO=$2
-            ARCH="linux_arm64"
+            ARCH="linux_amd64"
 
             echo "Fetching latest release for $TOOL_NAME..."
             LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest \
               | jq -r '.tag_name')
 
-            # The asset names differ slightly between repos:
-            #  - apko, melange: tarball named TOOL_LATEST_ARCH.tar.gz
-            #  - yq: single binary named yq_linux_amd64 (no .tar.gz)
             if [ "$TOOL_NAME" = "yq" ]; then
               ASSET="yq_${ARCH}"
               URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
-              OUT="$TOOL_NAME"
+              OUT="${ASSET}"
             else
               ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
               URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
@@ -231,12 +225,12 @@ jobs:
             curl -sL "$URL" -o "$OUT"
 
             if [ "$TOOL_NAME" = "yq" ]; then
-              chmod +x yq_${ARCH}
-              sudo install -m 0755 yq_${ARCH} /usr/local/bin/yq
+              chmod +x "${OUT}"
+              sudo install -m0755 "${OUT}" /usr/local/bin/yq
             else
               tar -xzf "$OUT"
               BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n1)
-              sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+              sudo install -m0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
             fi
 
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
