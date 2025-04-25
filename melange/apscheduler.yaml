@@ -30,7 +30,7 @@ pipeline:
      runs: |
        pip wheel apscheduler --wheel-dir /package
        pip install --no-index --find-links=/package apscheduler --prefix=/usr --root "${{targets.destdir}}"
-   - name: Enforce usrmerge layout
+  - name: Enforce usrmerge layout
      runs: |
        for dir in bin sbin usr/sbin; do
          if [ -d "${{targets.destdir}}/$dir" ]; then
