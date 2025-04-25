@@ -79,6 +79,14 @@ jobs:
         run: |
           melange keygen melange/melange.rsa
 
+      - name: Build py3-requests
+        env:
+          # make BuildKit emit plain logs so echos aren’t hidden
+          DOCKER_BUILDKIT: 1
+          BUILDKIT_PROGRESS: plain
+        run: |
+          find melange -name 'requests.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'         
+
       - name: Build all Python packages with melange
         run: |
           sudo apt-get install -y parallel
