@@ -87,14 +87,16 @@ jobs:
         run: |
           find melange -name 'requests.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
 
-          tar -xzf packages/x86_64/py3-requests-2.32.3-r0.apk data.tar.gz
-          tar -xzf data.tar.gz
-          find . -type d -name 'python3.*' | sed 's|^\./|/|'
 
-          apk add --allow-untrusted \
-            --root /tmp/req-test \
-            packages/x86_64/py3-requests-2.32.3-r0.apk
-          ls /tmp/req-test/usr/lib            
+          # Create a throw-away root
+          mkdir /tmp/req-inspect
+
+          # Install the package into that directory
+          apk add --allow-untrusted --root /tmp/req-inspect \
+              packages/x86_64/py3-requests-2.32.3-r0.apk
+
+          # Then simply list what got laid down
+          ls /tmp/req-inspect/usr/lib          
 
       - name: Build all Python packages with melange
         run: |
