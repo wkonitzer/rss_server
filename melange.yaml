@@ -1,0 +1,14 @@
+environment:
+  contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+
+    packages:
+      - py3-supported-build-base-dev
+      - py3-setuptools
+      - py3-setuptools-scm
+
