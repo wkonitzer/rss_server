@@ -1,12 +1,3 @@
-annotations:
-  org.opencontainers.image.title: "RSS Server"
-  org.opencontainers.image.description: "Secure multi-arch Python container built with Apko and Melange"
-  org.opencontainers.image.source: "https://github.com/wkonitzer/rss-server"
-  org.opencontainers.image.version: "1.0.13"
-  org.opencontainers.image.licenses: "MIT"
-
-base-image: ghcr.io/chainguard/python
-
 archs:
   - x86_64
   - aarch64
@@ -47,15 +38,27 @@ contents:
     - py3-tzlocal@local
     - py3-urllib3@local
     - py3-werkzeug@local
+    - python3
 
 work-dir: /app
 
 accounts:
   run-as: nonroot
+  users:
+    - username: nonroot
+      uid: 65532
+      gid: 65532
+      home: /home/nonroot
+  groups:
+    - groupname: nonroot
+      gid: 65532
 
 paths:
   - path: /app
     type: directory
     permissions: 755
+
+entrypoint:
+  command: python
 
 cmd: "-m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app --access-logfile - --access-logformat %({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -"
