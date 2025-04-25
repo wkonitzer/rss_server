@@ -8,8 +8,7 @@ package:
     - aarch64
   copyright:
     - license: MIT
-  source:
-    pypi: py3-beautifulsoup4==4.13.4    
+
 environment:
   contents:
     repositories:
@@ -25,12 +24,24 @@ environment:
       - py3-setuptools
       - py3-wheel
       - build-base
+
 pipeline:
-  - uses: python/build-wheel
-  - uses: python/install
+  - name: Build beautifulsoup4 wheel
+    runs: |
+      pip wheel beautifulsoup4 --wheel-dir /package
+      pip install --no-index --find-links=/package beautifulsoup4 --prefix=/usr --root "${{targets.destdir}}"
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
+
   - name: Cleanup unnecessary Python artifacts
     runs: |
       find "${{targets.destdir}}" -name '*.pyc' -delete
       find "${{targets.destdir}}" -name '*.pyo' -delete
       find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
-      find "${{targets.destdir}}" -name '*.dist-info' -type d -exec rm -rf {} +
