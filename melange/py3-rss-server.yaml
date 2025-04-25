@@ -27,7 +27,6 @@ environment:
 
 pipeline:
   - name: Build rss-server wheel
-  - name: Build rss-server wheel
     runs: |
       mkdir -p /src/rss_server
       cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py /src/rss_server/
