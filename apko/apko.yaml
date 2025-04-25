@@ -5,7 +5,7 @@ annotations:
   org.opencontainers.image.version: "1.0.13"
   org.opencontainers.image.licenses: "MIT"
 
-include: github.com/chainguard-images/images/python/apko.yaml@latest
+base-image: ghcr.io/chainguard/python
 
 archs:
   - x86_64
