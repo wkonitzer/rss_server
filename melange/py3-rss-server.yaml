@@ -26,18 +26,19 @@ environment:
       - build-base
 
 data:
-  - source: app.py
-    destination: rss_server/app.py
-  - source: config.py
-    destination: rss_server/config.py
-  - source: fetch_functions.py
-    destination: rss_server/fetch_functions.py
-  - source: get_latest_release.py
-    destination: rss_server/get_latest_release.py
-  - source: product_utils.py
-    destination: rss_server/product_utils.py
-  - source: __init__.py
-    destination: rss_server/__init__.py
+  - paths:
+      - source: app.py
+        destination: rss_server/app.py
+      - source: config.py
+        destination: rss_server/config.py
+      - source: fetch_functions.py
+        destination: rss_server/fetch_functions.py
+      - source: get_latest_release.py
+        destination: rss_server/get_latest_release.py
+      - source: product_utils.py
+        destination: rss_server/product_utils.py
+      - source: __init__.py
+        destination: rss_server/__init__.py
 
 pipeline:
   - name: Build rss-server wheel
