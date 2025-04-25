@@ -242,14 +242,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y jq
 
           install_latest_release apko chainguard-dev/apko
-          install_latest_release yq mikefarah/yq
-
-      - name: Install Mike Farah's yq (v4+)
-        run: |
-          curl -sSL \
-            https://github.com/mikefarah/yq/releases/download/v4.30.8/yq_linux_amd64 \
-            -o /usr/local/bin/yq
-          chmod +x /usr/local/bin/yq          
+          install_latest_release yq mikefarah/yq        
 
       - name: Verify CLI tools
         run: |
