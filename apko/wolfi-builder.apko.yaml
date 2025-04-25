@@ -8,7 +8,6 @@ contents:
   packages:
     - busybox
     - apk-tools
-    - libc6-compat
     - ca-certificates-bundle
 entrypoint:
   command: /bin/sh
