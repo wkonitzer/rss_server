@@ -1,3 +1,10 @@
+annotations:
+  org.opencontainers.image.title: "RSS Server"
+  org.opencontainers.image.description: "Secure multi-arch Python container built with Apko and Melange"
+  org.opencontainers.image.source: "https://github.com/wkonitzer/rss-server"
+  org.opencontainers.image.version: "1.0.13"
+  org.opencontainers.image.licenses: "MIT"
+
 archs:
   - x86_64
   - aarch64
@@ -53,9 +60,23 @@ accounts:
 
 paths:
   - path: /app
-    source: ./app
     type: directory
-    permissions: 755    
+    permissions: 755
+  - path: /app/app.py
+    source: ./app/app.py
+    permissions: 644
+  - path: /app/config.py
+    source: ./app/config.py
+    permissions: 644
+  - path: /app/fetch_functions.py
+    source: ./app/fetch_functions.py
+    permissions: 644
+  - path: /app/get_latest_release.py
+    source: ./app/get_latest_release.py
+    permissions: 644
+  - path: /app/product_utils.py
+    source: ./app/product_utils.py
+    permissions: 644    
 
 entrypoint:
   command: python
