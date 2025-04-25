@@ -48,7 +48,7 @@ contents:
     - py3-werkzeug@local
     - python3
 
-work-dir: /app
+work-dir: /
 
 accounts:
   run-as: nonroot
@@ -63,5 +63,5 @@ entrypoint:
   command: python
 
 cmd: |
-  -m gunicorn --preload -w 1 -b 0.0.0.0:4000 rss_server.app:app --access-logfile - --access-logformat "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%({r})s\" %(s)s -"
+  -m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app --access-logfile - --access-logformat "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%({r})s\" %(s)s -"
 
