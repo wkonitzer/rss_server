@@ -55,6 +55,10 @@ paths:
   - path: /app
     type: directory
     permissions: 755
+  - path: /app
+    source: ./app
+    type: directory
+    permissions: 755    
 
 entrypoint:
   command: python
