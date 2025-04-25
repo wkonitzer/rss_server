@@ -18,7 +18,6 @@ contents:
   packages:
     - py3-apscheduler@local
     - py3-beautifulsoup4@local
-    - py3-blinker@local
     - py3-certifi@local
     - py3-charset-normalizer@local
     - py3-click@local
