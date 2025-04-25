@@ -25,27 +25,35 @@ environment:
       - py3-wheel
       - build-base
 
+data:
+  - source: app.py
+    destination: rss_server/app.py
+  - source: config.py
+    destination: rss_server/config.py
+  - source: fetch_functions.py
+    destination: rss_server/fetch_functions.py
+  - source: get_latest_release.py
+    destination: rss_server/get_latest_release.py
+  - source: product_utils.py
+    destination: rss_server/product_utils.py
+  - source: __init__.py
+    destination: rss_server/__init__.py
+
 pipeline:
   - name: Build rss-server wheel
+  - name: Build rss-server wheel
     runs: |
-      mkdir -p /src/rss_server
-      cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py /src/rss_server/
-      touch /src/rss_server/__init__.py
+      echo '[build-system]' > pyproject.toml
+      echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+      echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
 
-      mkdir -p /src
+      echo '[metadata]' > setup.cfg
+      echo 'name = rss-server' >> setup.cfg
+      echo 'version = 1.0.13' >> setup.cfg
+      echo '' >> setup.cfg
+      echo '[options]' >> setup.cfg
+      echo 'packages = find:' >> setup.cfg
 
-      echo '[build-system]' > /src/pyproject.toml
-      echo 'requires = ["setuptools", "wheel"]' >> /src/pyproject.toml
-      echo 'build-backend = "setuptools.build_meta"' >> /src/pyproject.toml
-
-      echo '[metadata]' > /src/setup.cfg
-      echo 'name = rss-server' >> /src/setup.cfg
-      echo 'version = 1.0.13' >> /src/setup.cfg
-      echo '' >> /src/setup.cfg
-      echo '[options]' >> /src/setup.cfg
-      echo 'packages = find:' >> /src/setup.cfg
-
-      cd /src
       python3 -m pip wheel . --wheel-dir /package
 
   - name: Install rss-server wheel into rootfs
