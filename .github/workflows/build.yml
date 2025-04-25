@@ -88,8 +88,7 @@ jobs:
           mkdir -p packages/x86_64 packages/aarch64
 
           find melange -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
-          #find melange -name 'requests.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
-          #find melange -name '*.yaml' | parallel -j 1 'melange build {} --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
+          find melange -name '*.yaml' | parallel -j 1 'melange build {} --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
 
       - name: list files and check index
         run: |
@@ -122,12 +121,12 @@ jobs:
       - name: Build container images for both archs with apko
         run: |
           APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
-          #APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-arm64.tar
+          APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-arm64.tar
 
       - name: Load and tag both images
         run: |
           docker load < rss-server-amd64.tar
-          #docker load < rss-server-arm64.tar
+          docker load < rss-server-arm64.tar
 
       - name: Test x86_64 container
         run: |
@@ -139,15 +138,15 @@ jobs:
           echo "🛑 Stopping container"
           docker rm -f $CONTAINER_ID
 
-      #- name: Test arm64 container
-      #  run: |
-      #    CONTAINER_ID=$(docker run -d --platform=linux/arm64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64)
-      #    echo "🟡 Waiting for logs..."
-      #    sleep 5
-      #    echo "📜 Container logs:"
-      #    docker logs $CONTAINER_ID
-      #    echo "🛑 Stopping container"
-      #    docker rm -f $CONTAINER_ID
+      - name: Test arm64 container
+        run: |
+          CONTAINER_ID=$(docker run -d --platform=linux/arm64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64)
+          echo "🟡 Waiting for logs..."
+          sleep 5
+          echo "📜 Container logs:"
+          docker logs $CONTAINER_ID
+          echo "🛑 Stopping container"
+          docker rm -f $CONTAINER_ID
 
       - name: Push individual architecture images
         run: |
@@ -159,7 +158,6 @@ jobs:
         run: |
           docker manifest create ghcr.io/${{ github.repository_owner }}/rss-server:latest \
             --amend ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64 \
-            
-            #--amend ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
+            --amend ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
 
           docker manifest push ghcr.io/${{ github.repository_owner }}/rss-server:latest
