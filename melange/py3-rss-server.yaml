@@ -55,6 +55,7 @@ pipeline:
 
       # actually build the wheel into wheelhouse
       cd "${{targets.contextdir}}"
+      python3 -m pip install --no-cache-dir build setuptools wheel
       python3 -m build --wheel --no-isolation --outdir wheelhouse
 
   - name: Install rss-server wheel into rootfs
