@@ -1,0 +1,84 @@
+package:
+  name: py3-rss-server
+  version: 1.0.13
+  epoch: 0
+  description: "Modular RSS Server application"
+  target-architecture:
+    - x86_64
+    - aarch64
+  copyright:
+    - license: MIT
+
+environment:
+  contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    packages:
+      - busybox
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - build-base
+
+pipeline:
+  - name: Prepare build context
+    runs: |
+      mkdir -p "${{targets.contextdir}}"/wheelhouse
+      # copy modules
+      cp \
+        "${{package.srcdir}}"/app.py \
+        "${{package.srcdir}}"/get_latest_release.py \
+        "${{package.srcdir}}"/config.py \
+        "${{package.srcdir}}"/fetch_functions.py \
+        "${{package.srcdir}}"/product_utils.py \
+        "${{targets.contextdir}}"/
+
+      # write metadata
+      echo "[build-system]" > "${{targets.contextdir}}/pyproject.toml"
+      echo "requires = [\"setuptools\",\"wheel\"]" >> "${{targets.contextdir}}/pyproject.toml"
+      echo "build-backend = \"setuptools.build_meta\"" >> "${{targets.contextdir}}/pyproject.toml"
+      echo "[metadata]" > "${{targets.contextdir}}/setup.cfg"
+      echo "name = rss-server" >> "${{targets.contextdir}}/setup.cfg"
+      echo "version = 1.0.13" >> "${{targets.contextdir}}/setup.cfg"
+      echo "[options]" >> "${{targets.contextdir}}/setup.cfg"
+      echo "py_modules =" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    app" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    get_latest_release" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    config" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    fetch_functions" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    product_utils" >> "${{targets.contextdir}}/setup.cfg"
+
+      # actually build the wheel into wheelhouse
+      cd "${{targets.contextdir}}"
+      python3 -m pip install --no-cache-dir build setuptools wheel
+      python3 -m build --wheel --no-isolation --outdir wheelhouse
+
+  - name: Install rss-server wheel into rootfs
+    runs: |
+      python3 -m pip install \
+        --no-index \
+        --find-links="${{targets.contextdir}}/wheelhouse" \
+        rss-server \
+        --root="${{targets.destdir}}"
+
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
+
+  - name: Cleanup unnecessary Python artifacts
+    runs: |
+      find "${{targets.destdir}}" -name '*.pyc' -delete
+      find "${{targets.destdir}}" -name '*.pyo' -delete
+      find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
+      find "${{targets.destdir}}" -name '*.dist-info' -type d -exec rm -rf {} +

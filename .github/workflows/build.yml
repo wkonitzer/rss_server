@@ -87,27 +87,9 @@ jobs:
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
+          find melange -name '*.yaml' | parallel -j 1 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
           #find melange -name 'requests.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
-          #find melange -name '*.yaml' | parallel -j 1 'melange build {} --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true' 
-
-      - name: Build py3-requests
-        env:
-          # make BuildKit emit plain logs so echos aren’t hidden
-          DOCKER_BUILDKIT: 1
-          BUILDKIT_PROGRESS: plain
-        run: |
-          find melange -name 'requests.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
-
-          file packages/x86_64/py3-requests-2.32.3-r0.apk ||true
-
-          tar --use-compress-program=unzstd -tvf packages/x86_64/py3-requests-2.32.3-r0.apk ||true
-
-          tar --use-compress-program=unzstd -xvf packages/x86_64/py3-requests-2.32.3-r0.apk data.tar.gz ||true 
-
-          tar -xzf data.tar.gz ||true 
-
-          find usr/lib -maxdepth 2 -type d | grep site-packages ||true                           
+          #find melange -name '*.yaml' | parallel -j 1 'melange build {} --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
 
       - name: list files and check index
         run: |

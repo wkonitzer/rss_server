@@ -1,13 +1,13 @@
 package:
-  name: py3-itsdangerous
-  version: 2.2.0
+  name: py3-packaging
+  version: 24.2
   epoch: 0
-  description: "Python package itsdangerous"
+  description: "Python package packaging"
   target-architecture:
     - x86_64
     - aarch64
   copyright:
-    - license: BSD-3-Clause
+    - license: Apache-2.0 OR BSD-2-Clause
 
 environment:
   contents:
@@ -26,8 +26,19 @@ environment:
       - build-base
 
 pipeline:
-  - uses: python/build-wheel
-  - uses: python/install
+  - name: Build packaging wheel
+    runs: |
+      pip wheel packaging --wheel-dir /package
+      pip install --no-index --find-links=/package packaging --prefix=/usr --root "${{targets.destdir}}"
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
 
   - name: Cleanup unnecessary Python artifacts
     runs: |

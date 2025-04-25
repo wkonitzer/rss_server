@@ -26,8 +26,19 @@ environment:
       - build-base
 
 pipeline:
-  - uses: python/build-wheel
-  - uses: python/install
+  - name: Build itsdangerous wheel
+    runs: |
+      pip wheel itsdangerous --wheel-dir /package
+      pip install --no-index --find-links=/package itsdangerous --prefix=/usr --root "${{targets.destdir}}"
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
 
   - name: Cleanup unnecessary Python artifacts
     runs: |

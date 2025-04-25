@@ -1,8 +1,8 @@
 package:
-  name: py3-itsdangerous
-  version: 2.2.0
+  name: py3-markupsafe
+  version: 3.0.2
   epoch: 0
-  description: "Python package itsdangerous"
+  description: "Python package markupsafe"
   target-architecture:
     - x86_64
     - aarch64
@@ -26,8 +26,19 @@ environment:
       - build-base
 
 pipeline:
-  - uses: python/build-wheel
-  - uses: python/install
+  - name: Build markupsafe wheel
+    runs: |
+      pip wheel markupsafe --wheel-dir /package
+      pip install --no-deps --no-index --find-links=/package markupsafe --prefix=/usr --root "${{targets.destdir}}"
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
 
   - name: Cleanup unnecessary Python artifacts
     runs: |

@@ -26,23 +26,8 @@ environment:
       - build-base
 
 pipeline:
-  - name: Dump Python & pip
-    runs: |
-      echo "== python3 => $(which python3) ==$(python3 --version)=="
-      echo "== pip    => $(which pip)    ==$(pip --version)=="  
-  - name: Build requests wheel
-    runs: |
-      python3 -m pip wheel requests --wheel-dir /package
-      python3 -m pip install --no-index --find-links=/package requests --prefix=/usr --root "${{targets.destdir}}"
-  - name: Enforce usrmerge layout
-    runs: |
-      for dir in bin sbin usr/sbin; do
-        if [ -d "${{targets.destdir}}/$dir" ]; then
-          mkdir -p "${{targets.destdir}}/usr/bin"
-          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
-          rm -rf "${{targets.destdir}}/$dir"
-        fi
-      done
+  - uses: python/build-wheel
+  - uses: python/install
 
   - name: Cleanup unnecessary Python artifacts
     runs: |
