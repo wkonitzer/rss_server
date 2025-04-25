@@ -35,35 +35,49 @@ jobs:
           go build -o melange .
           sudo mv melange /usr/local/bin/melange   
 
-      - name: Install latest apko
+      - name: Install latest apko and yq
         run: |
           install_latest_release() {
             TOOL_NAME=$1
             GH_REPO=$2
             ARCH="linux_amd64"
-      
-            echo "Fetching latest release for $TOOL_NAME..."
-            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
-            TARBALL="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
-            URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${TARBALL}"
-      
-            echo "Downloading $TOOL_NAME from $URL"
-            curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
-            tar -xzf ${TOOL_NAME}.tar.gz
 
-            BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n 1)
-            if [ -z "$BINARY_PATH" ]; then
-              echo "❌ Could not find binary '$TOOL_NAME' in archive"
-              exit 1
+            echo "Fetching latest release for $TOOL_NAME..."
+            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest \
+              | jq -r '.tag_name')
+
+            # The asset names differ slightly between repos:
+            #  - apko, melange: tarball named TOOL_LATEST_ARCH.tar.gz
+            #  - yq: single binary named yq_linux_amd64 (no .tar.gz)
+            if [ "$TOOL_NAME" = "yq" ]; then
+              ASSET="yq_${ARCH}"
+              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
+              OUT="$TOOL_NAME"
+            else
+              ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
+              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
+              OUT="${TOOL_NAME}.tar.gz"
             fi
-            
-            sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+
+            echo "Downloading $TOOL_NAME from $URL"
+            curl -sL "$URL" -o "$OUT"
+
+            if [ "$TOOL_NAME" = "yq" ]; then
+              chmod +x yq_${ARCH}
+              sudo install -m 0755 yq_${ARCH} /usr/local/bin/yq
+            else
+              tar -xzf "$OUT"
+              BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n1)
+              sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+            fi
+
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
-      
-          sudo apt-get update && sudo apt-get install -y jq yq
-      
+
+          sudo apt-get update && sudo apt-get install -y jq
+
           install_latest_release apko chainguard-dev/apko
+          install_latest_release yq mikefarah/yq
 
       - name: Verify CLI tools
         run: |
@@ -189,35 +203,56 @@ jobs:
           go build -o melange .
           sudo mv melange /usr/local/bin/melange 
 
-      - name: Install latest apko
+      - name: Install latest apko and yq
         run: |
           install_latest_release() {
             TOOL_NAME=$1
             GH_REPO=$2
             ARCH="linux_arm64"
-      
-            echo "Fetching latest release for $TOOL_NAME..."
-            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
-            TARBALL="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
-            URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${TARBALL}"
-      
-            echo "Downloading $TOOL_NAME from $URL"
-            curl -sL "$URL" -o ${TOOL_NAME}.tar.gz
-            tar -xzf ${TOOL_NAME}.tar.gz
 
-            BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n 1)
-            if [ -z "$BINARY_PATH" ]; then
-              echo "❌ Could not find binary '$TOOL_NAME' in archive"
-              exit 1
+            echo "Fetching latest release for $TOOL_NAME..."
+            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest \
+              | jq -r '.tag_name')
+
+            # The asset names differ slightly between repos:
+            #  - apko, melange: tarball named TOOL_LATEST_ARCH.tar.gz
+            #  - yq: single binary named yq_linux_amd64 (no .tar.gz)
+            if [ "$TOOL_NAME" = "yq" ]; then
+              ASSET="yq_${ARCH}"
+              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
+              OUT="$TOOL_NAME"
+            else
+              ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
+              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
+              OUT="${TOOL_NAME}.tar.gz"
             fi
-            
-            sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+
+            echo "Downloading $TOOL_NAME from $URL"
+            curl -sL "$URL" -o "$OUT"
+
+            if [ "$TOOL_NAME" = "yq" ]; then
+              chmod +x yq_${ARCH}
+              sudo install -m 0755 yq_${ARCH} /usr/local/bin/yq
+            else
+              tar -xzf "$OUT"
+              BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n1)
+              sudo install -m 0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+            fi
+
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
-      
-          sudo apt-get update && sudo apt-get install -y jq yg
-      
+
+          sudo apt-get update && sudo apt-get install -y jq
+
           install_latest_release apko chainguard-dev/apko
+          install_latest_release yq mikefarah/yq
+
+      - name: Install Mike Farah's yq (v4+)
+        run: |
+          curl -sSL \
+            https://github.com/mikefarah/yq/releases/download/v4.30.8/yq_linux_amd64 \
+            -o /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq          
 
       - name: Verify CLI tools
         run: |
