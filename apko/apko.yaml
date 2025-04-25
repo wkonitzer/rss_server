@@ -46,12 +46,10 @@ accounts:
   run-as: nonroot
   users:
     - username: nonroot
-      uid: 65532
-      gid: 65532
-      home: /home/nonroot
+      uid: 10000
   groups:
     - groupname: nonroot
-      gid: 65532
+      gid: 10000
 
 paths:
   - path: /app
