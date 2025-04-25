@@ -51,8 +51,7 @@ subpackages:
     pipeline:
       - uses: py/pip-build-install
         with:
-          python: python${{range.key}}
-      - uses: strip          
+          python: python${{range.key}}        
     test:
       pipeline:
         - uses: python/import

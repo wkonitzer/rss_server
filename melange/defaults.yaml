@@ -11,4 +11,8 @@ environment:
       - py3-supported-build-base-dev
       - py3-setuptools
       - py3-setuptools-scm
+      - python3.10
+      - python3.11
+      - python3.12
+      - python3.13
 
