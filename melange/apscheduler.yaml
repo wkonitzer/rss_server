@@ -11,11 +11,14 @@ package:
 vars:
   pypi-package: apscheduler
   import: apscheduler  
-  python-versions:
-    3.10: "310"
-    3.11: "311"
-    3.12: "312"
-    3.13: "313"            
+
+data:
+  - name: py-versions
+    items:
+      3.10: "310"
+      3.11: "311"
+      3.12: "312"
+      3.13: "313"            
 
 pipeline:
   - uses: git-checkout
@@ -30,7 +33,7 @@ pipeline:
         - build-base      
 
 subpackages:
-  - range: vars.py-versions
+  - range: py-versions
     name: py${{range.key}}-${{vars.pypi-package}}
     description: ${{vars.pypi-package}} installed for python${{range.key}}
     dependencies:
