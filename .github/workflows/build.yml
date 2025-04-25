@@ -173,14 +173,14 @@ jobs:
       - name: Push individual architecture images
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/${{ github.repository_owner }}/rss-server:amd64
-          #docker push ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+          docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64
+          #docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
 
       - name: Create and push multi-arch manifest
         run: |
           docker manifest create ghcr.io/${{ github.repository_owner }}/rss-server:latest \
-            --amend ghcr.io/${{ github.repository_owner }}/rss-server:amd64 \
+            --amend ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64 \
             
-            #--amend ghcr.io/${{ github.repository_owner }}/rss-server:arm64
+            #--amend ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
 
           docker manifest push ghcr.io/${{ github.repository_owner }}/rss-server:latest
