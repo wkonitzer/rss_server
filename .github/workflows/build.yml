@@ -87,8 +87,7 @@ jobs:
         run: |
           find melange -name 'requests.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
 
-          sudo apt update
-          sudo apt install apk-tools
+          sudo snap install apktool
 
           # Create a throw-away root
           mkdir /tmp/req-inspect
