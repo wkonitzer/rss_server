@@ -1,3 +1,10 @@
+annotations:
+  org.opencontainers.image.title: "RSS Server"
+  org.opencontainers.image.description: "Secure multi-arch Python container built with Apko and Melange"
+  org.opencontainers.image.source: "https://github.com/wkonitzer/rss-server"
+  org.opencontainers.image.version: "1.0.13"
+  org.opencontainers.image.licenses: "MIT"
+
 include: github.com/chainguard-images/images/python/apko.yaml@latest
 
 archs:
@@ -51,12 +58,4 @@ paths:
     type: directory
     permissions: 755
 
-cmd:
-  - "-m"
-  - "gunicorn"
-  - "--preload"
-  - "-w"
-  - "1"
-  - "-b"
-  - "0.0.0.0:4000"
-  - "app:app"    
+cmd: "-m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app --access-logfile - --access-logformat %({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -"
