@@ -28,6 +28,12 @@ jobs:
           repository: wolfi-dev/os
           path: wolfi-os
 
+      - name: Checkout melange stable version
+        run: |
+          cd melange-src
+          git fetch --tags
+          git checkout v0.23.10
+
       - name: Merge pipelines & build melange
         run: |
           cp -r wolfi-os/pipelines/py melange-src/pkg/build/pipelines/
