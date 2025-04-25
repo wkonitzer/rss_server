@@ -38,4 +38,4 @@ melange build "$@" \
   --keyring-append "${BOOTSTRAP_KEY}" \
   --keyring-append "${OS_KEY}" \
   --runner docker \
-  --runner-option base-image="${BASE_IMAGE}"
+  --package-append busybox
