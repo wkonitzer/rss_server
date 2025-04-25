@@ -32,17 +32,16 @@ pipeline:
       cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py /src/rss_server/
       touch /src/rss_server/__init__.py
       
-      # Create pyproject.toml and setup.cfg
-      cat > /src/pyproject.toml <<EOF
+      cat <<EOF > /src/pyproject.toml
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 EOF
 
-      cat > /src/setup.cfg <<EOF
+      cat <<EOF > /src/setup.cfg
 [metadata]
 name = rss-server
-version = 1.0.13
+version = 1.0.0
 
 [options]
 packages = find:
