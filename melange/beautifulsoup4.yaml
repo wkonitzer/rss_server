@@ -29,7 +29,7 @@ pipeline:
   - name: Build beautifulsoup4 wheel
     runs: |
       pip wheel beautifulsoup4 --wheel-dir /package
-      pip install --no-index --find-links=/package beautifulsoup4 --root "${{targets.destdir}}"
+      pip install --no-index --find-links=/package beautifulsoup4 --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

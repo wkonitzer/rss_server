@@ -29,7 +29,7 @@ pipeline:
   - name: Build gunicorn wheel
     runs: |
       pip wheel gunicorn --wheel-dir /package
-      pip install --no-index --find-links=/package gunicorn --root "${{targets.destdir}}"
+      pip install --no-index --find-links=/package gunicorn --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

@@ -32,7 +32,7 @@ pipeline:
   - name: Build jinja2 wheel
     runs: |
       pip wheel jinja2 --wheel-dir /package
-      pip install --no-deps --no-index --find-links=/package Jinja2 --root "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package Jinja2 --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

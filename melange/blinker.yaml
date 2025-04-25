@@ -29,7 +29,7 @@ pipeline:
   - name: Build blinker wheel
     runs: |
       pip wheel blinker --wheel-dir /package
-      pip install --no-index --find-links=/package blinker --root "${{targets.destdir}}"
+      pip install --no-index --find-links=/package blinker --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

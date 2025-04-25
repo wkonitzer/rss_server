@@ -32,7 +32,7 @@ pipeline:
   - name: Build feedgen wheel
     runs: |
       pip wheel feedgen --wheel-dir /package
-      pip install --no-deps --no-index --find-links=/package feedgen --root "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package feedgen --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

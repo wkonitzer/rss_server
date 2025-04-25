@@ -29,7 +29,7 @@ pipeline:
   - name: Build pluggy wheel
     runs: |
       pip wheel pluggy --wheel-dir /package
-      pip install --no-index --find-links=/package pluggy --root "${{targets.destdir}}"
+      pip install --no-index --find-links=/package pluggy --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

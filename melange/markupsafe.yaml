@@ -29,7 +29,7 @@ pipeline:
   - name: Build markupsafe wheel
     runs: |
       pip wheel markupsafe --wheel-dir /package
-      pip install --no-deps --no-index --find-links=/package markupsafe --root "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package markupsafe --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

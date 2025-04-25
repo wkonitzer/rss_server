@@ -29,7 +29,7 @@ pipeline:
   - name: Build prometheus-flask-exporter wheel
     runs: |
       pip wheel prometheus-flask-exporter --wheel-dir /package
-      pip install --no-index --find-links=/package prometheus-flask-exporter --root "${{targets.destdir}}"
+      pip install --no-index --find-links=/package prometheus-flask-exporter --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

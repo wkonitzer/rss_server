@@ -29,7 +29,7 @@ pipeline:
   - name: Build charset-normalizer wheel
     runs: |
       pip wheel charset-normalizer --wheel-dir /package
-      pip install --no-index --find-links=/package charset-normalizer --root "${{targets.destdir}}"
+      pip install --no-index --find-links=/package charset-normalizer --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do
