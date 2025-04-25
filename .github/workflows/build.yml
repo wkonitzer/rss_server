@@ -112,6 +112,11 @@ jobs:
           mkdir -p app
           cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py app/
 
+      - name: Debug copied app files
+        run: |
+          echo "Contents of ./app:"
+          ls -lah ./app          
+
       - name: list files and check index
         run: |
           echo "📁 Current working directory:"
@@ -142,7 +147,7 @@ jobs:
 
       - name: Build container images for both archs with apko
         run: |
-          APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
+          APKO_RUNNER=none apko build  --include-paths ./app --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
           #APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-arm64.tar
 
       - name: Load and tag both images
