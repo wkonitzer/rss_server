@@ -87,7 +87,7 @@ jobs:
         run: |
           find melange -name 'requests.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'
 
-          sudo snap install apktool
+          apt-get install alpine
 
           # Create a throw-away root
           mkdir /tmp/req-inspect
