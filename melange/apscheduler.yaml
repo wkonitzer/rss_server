@@ -10,20 +10,12 @@ package:
 
 vars:
   pypi-package: apscheduler
-  import: apscheduler    
-
-data:
-  - name: py-versions
-    items:
-      3.10: '310'
-      3.11: '311'
-      3.12: '312'
-      3.13: '313'    
-
-environment:
-  contents:
-    packages:
-      - build-base     
+  import: apscheduler  
+  python-versions:
+    3.10: "310"
+    3.11: "311"
+    3.12: "312"
+    3.13: "313"            
 
 pipeline:
   - uses: git-checkout
@@ -31,6 +23,11 @@ pipeline:
       repository: https://github.com/agronholm/apscheduler
       tag: ${{package.version}}
       expected-commit: 6c72a51416893eb0eebbe63d0f2a0151952cab59
+
+  - uses: apk/add
+    with:
+      packages:
+        - build-base      
 
 subpackages:
   - range: vars.py-versions
