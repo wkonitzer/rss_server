@@ -1,0 +1,58 @@
+package:
+  name: py3-rss-server
+  version: 1.0.13
+  epoch: 0
+  description: "Modular RSS Server application"
+  target-architecture:
+    - x86_64
+    - aarch64
+  copyright:
+    - license: MIT
+
+environment:
+  contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    packages:
+      - busybox
+      - python3
+      - py3-pip
+      - py3-setuptools
+      - py3-wheel
+      - build-base
+
+pipeline:
+  - name: Build rss-server wheel
+    runs: |
+      mkdir -p /app
+      cp app.py config.py fetch_functions.py get_latest_release.py product_utils.py /app/
+      cd /app
+      echo "[build-system]" > pyproject.toml
+      echo "requires = [\"setuptools\", \"wheel\"]" >> pyproject.toml
+      echo "build-backend = \"setuptools.build_meta\"" >> pyproject.toml
+      python3 -m pip wheel . --wheel-dir /package
+
+  - name: Install rss-server wheel into rootfs
+    runs: |
+      python3 -m pip install --no-index --find-links=/package py3-rss-server --root="${{targets.destdir}}"
+
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
+
+  - name: Cleanup unnecessary Python artifacts
+    runs: |
+      find "${{targets.destdir}}" -name '*.pyc' -delete
+      find "${{targets.destdir}}" -name '*.pyo' -delete
+      find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
+      find "${{targets.destdir}}" -name '*.dist-info' -type d -exec rm -rf {} +

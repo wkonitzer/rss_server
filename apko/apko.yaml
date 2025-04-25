@@ -56,31 +56,11 @@ accounts:
       uid: 10000
   groups:
     - groupname: nonroot
-      gid: 10000
-
-paths:
-  - path: /app
-    type: directory
-    permissions: 755
-  - path: /app/app.py
-    source: ./app/app.py
-    permissions: 644
-  - path: /app/config.py
-    source: ./app/config.py
-    permissions: 644
-  - path: /app/fetch_functions.py
-    source: ./app/fetch_functions.py
-    permissions: 644
-  - path: /app/get_latest_release.py
-    source: ./app/get_latest_release.py
-    permissions: 644
-  - path: /app/product_utils.py
-    source: ./app/product_utils.py
-    permissions: 644    
+      gid: 10000   
 
 entrypoint:
   command: python
 
 cmd: |
-  -m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app --access-logfile - --access-logformat "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%({r})s\" %(s)s -"
+  -m gunicorn --preload -w 1 -b 0.0.0.0:4000 rss_server.app:app --access-logfile - --access-logformat "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%({r})s\" %(s)s -"
 
