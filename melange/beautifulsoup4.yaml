@@ -8,6 +8,8 @@ package:
     - aarch64
   copyright:
     - license: MIT
+  source:
+    pypi: py3-beautifulsoup4==4.13.4    
 environment:
   contents:
     repositories:
@@ -32,5 +34,3 @@ pipeline:
       find "${{targets.destdir}}" -name '*.pyo' -delete
       find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
       find "${{targets.destdir}}" -name '*.dist-info' -type d -exec rm -rf {} +
-source:
-  pypi: py3-beautifulsoup4==4.13.4
