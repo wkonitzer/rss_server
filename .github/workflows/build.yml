@@ -132,12 +132,12 @@ jobs:
           mkdir -p packages/x86_64 packages/aarch64
 
           find melange -name '*.yaml' ! -name 'vars.yaml' ! -name 'common.yaml' \
-        | parallel -j 3 './wolfi-build.sh {} \
-            --source-dir . \
-            --arch x86_64 \
-            --out-dir packages \
-            --signing-key melange/melange.rsa \
-            --runner docker || true'
+          | parallel -j 3 './wolfi-build.sh {} \
+              --source-dir . \
+              --arch x86_64 \
+              --out-dir packages \
+              --signing-key melange/melange.rsa \
+              --runner docker || true'
                
       - name: list files and check index
         run: |
