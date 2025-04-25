@@ -8,9 +8,6 @@ environment:
       - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
 
     packages:
-      - py3-supported-build-base-dev
-      - py3-setuptools
-      - py3-setuptools-scm
       - python-3.10
       - python-3.11
       - python-3.12

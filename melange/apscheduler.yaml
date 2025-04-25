@@ -24,8 +24,7 @@ environment:
   contents:
     packages:
       - py3-supported-build-base-dev
-      - py3-setuptools
-      - py3-setuptools-scm
+      - py3-supported-setuptools-scm
 
 pipeline:
   - uses: git-checkout
