@@ -61,7 +61,7 @@ jobs:
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
       
-          sudo apt-get update && sudo apt-get install -y jq
+          sudo apt-get update && sudo apt-get install -y jq yq
       
           install_latest_release apko chainguard-dev/apko
 
@@ -92,14 +92,26 @@ jobs:
           melange keygen melange/melange.rsa
 
       - name: Remove melange build cache
-        run: rm -rf ./melange-cache/                  
+        run: rm -rf ./melange-cache/   
+
+      - name: Create build files
+        run: |
+          rm -rf build && mkdir build
+
+          for pkg in melange/*.yaml; do
+            [ "$(basename "$pkg")" = "defaults.yaml" ] && continue
+
+            yq eval-all '. as $defaults ireduce ({}; . *+ $defaults )' \
+              melange/defaults.yaml "$pkg" \
+              > build/"$(basename "$pkg")"
+          done                      
 
       - name: Build all Python packages with melange
         run: |
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' | parallel -j 3 'melange build {} --config melange.yaml --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                          
+          find build -name '*.yaml' | parallel -j 3 'melange build {} --config melange.yaml --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                          
 
       - name: list files and check index
         run: |
@@ -203,7 +215,7 @@ jobs:
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
       
-          sudo apt-get update && sudo apt-get install -y jq
+          sudo apt-get update && sudo apt-get install -y jq yg
       
           install_latest_release apko chainguard-dev/apko
 
@@ -234,14 +246,26 @@ jobs:
           melange keygen melange/melange.rsa
 
       - name: Remove melange build cache
-        run: rm -rf ./melange-cache/                  
+        run: rm -rf ./melange-cache/     
+
+      - name: Create build files
+        run: |
+          rm -rf build && mkdir build
+
+          for pkg in melange/*.yaml; do
+            [ "$(basename "$pkg")" = "defaults.yaml" ] && continue
+
+            yq eval-all '. as $defaults ireduce ({}; . *+ $defaults )' \
+              melange/defaults.yaml "$pkg" \
+              > build/"$(basename "$pkg")"
+          done             
 
       - name: Build all Python packages with melange
         run: |
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' | parallel -j 3 'melange build {} --config melange.yaml --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
+          find build -name '*.yaml' | parallel -j 3 'melange build {} --config melange.yaml --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
 
       - name: list files and check index
         run: |
