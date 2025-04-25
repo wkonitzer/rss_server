@@ -18,18 +18,19 @@ data:
       3.10: "310"
       3.11: "311"
       3.12: "312"
-      3.13: "313"            
+      3.13: "313"
+
+environment:
+  contents:
+    packages:
+      - build-base                
 
 pipeline:
   - uses: git-checkout
     with:
       repository: https://github.com/agronholm/apscheduler
       tag: ${{package.version}}
-      expected-commit: 6c72a51416893eb0eebbe63d0f2a0151952cab59
-
-  - uses: apk/add
-    with:
-      packages: build-base      
+      expected-commit: 6c72a51416893eb0eebbe63d0f2a0151952cab59     
 
 subpackages:
   - range: py-versions
