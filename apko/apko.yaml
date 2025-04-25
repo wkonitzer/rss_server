@@ -40,6 +40,7 @@ contents:
     - py3-pytz@local
     - py3-pyyaml@local
     - py3-requests@local
+    - py3-rss-server@local
     - py3-six@local
     - py3-soupsieve@local
     - py3-tzlocal@local
