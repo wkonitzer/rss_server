@@ -18,6 +18,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Checkout Melange pipelines
+        uses: actions/checkout@v3
+        with:
+          repository: chainguard-dev/melange
+          path: pipelines        
+
       - name: Install latest melange and apko
         run: |
           install_latest_release() {
@@ -83,7 +89,7 @@ jobs:
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                          
+          find melange -name '*.yaml' | parallel -j 3 'melange build {} --pipelines-dir=./pipelines --source-dir . --arch x86_64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                          
 
       - name: list files and check index
         run: |
@@ -138,11 +144,17 @@ jobs:
 
 
   build-arm64:
-    runs-on: ubuntu-24.04-arm   
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+        - name: Checkout Melange pipelines
+        uses: actions/checkout@v3
+        with:
+          repository: chainguard-dev/melange
+          path: pipelines      
 
       - name: Install latest melange and apko
         run: |
@@ -209,7 +221,7 @@ jobs:
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
+          find melange -name '*.yaml' | parallel -j 3 'melange build {} --pipelines-dir=./pipelines --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
 
       - name: list files and check index
         run: |
