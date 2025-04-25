@@ -32,7 +32,6 @@ contents:
     - py3-jinja2@local
     - py3-lxml@local
     - py3-markupsafe@local
-    - py3-packaging@local
     - py3-pluggy@local
     - py3-prometheus-client@local
     - py3-prometheus-flask-exporter@local
