@@ -49,14 +49,11 @@ subpackages:
         - py${{range.key}}-tzlocal
         - py${{range.key}}-typing_extensions        
     pipeline:
-      - uses: python/build
+      - uses: py/pip-build-install
         with:
           python: python${{range.key}}
-          package: ${{vars.pypi-package}}       
-      - uses: python/install
-        with:
-          python: python${{range.key}}
-          package: ${{vars.pypi-package}}        
+          package: ${{vars.pypi-package}}
+      - uses: strip          
     test:
       pipeline:
         - uses: python/import

@@ -16,7 +16,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3       
+        uses: actions/checkout@v3
+
+      - name: Checkout Wolfi OS pipelines
+        uses: actions/checkout@v3
+        with:
+          repository: wolfi-dev/os
+          path: wolfi-os
+
+      - name: Vendor Wolfi python pipelines
+        run: |
+          mkdir -p melange/pipelines/py
+          cp -R wolfi-os/pipelines/py/* melange/pipelines/py/          
 
       - name: Install latest melange and apko
         run: |
@@ -142,7 +153,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3     
+        uses: actions/checkout@v3  
+
+      - name: Checkout Wolfi OS pipelines
+        uses: actions/checkout@v3
+        with:
+          repository: wolfi-dev/os
+          path: wolfi-os
+
+      - name: Vendor Wolfi python pipelines
+        run: |
+          mkdir -p melange/pipelines/py
+          cp -R wolfi-os/pipelines/py/* melange/pipelines/py/             
 
       - name: Install latest melange and apko
         run: |
