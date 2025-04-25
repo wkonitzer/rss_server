@@ -8,7 +8,6 @@ package:
     - aarch64
   copyright:
     - license: MIT
-
 environment:
   contents:
     repositories:
@@ -24,14 +23,14 @@ environment:
       - py3-setuptools
       - py3-wheel
       - build-base
-
 pipeline:
   - uses: python/build-wheel
   - uses: python/install
-
   - name: Cleanup unnecessary Python artifacts
     runs: |
       find "${{targets.destdir}}" -name '*.pyc' -delete
       find "${{targets.destdir}}" -name '*.pyo' -delete
       find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
       find "${{targets.destdir}}" -name '*.dist-info' -type d -exec rm -rf {} +
+source:
+  pypi: py3-pytz==2025.2

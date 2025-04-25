@@ -8,7 +8,6 @@ package:
     - aarch64
   copyright:
     - license: MIT
-
 environment:
   contents:
     repositories:
@@ -24,7 +23,6 @@ environment:
       - py3-setuptools
       - py3-wheel
       - build-base
-
 pipeline:
   - name: Prepare build context
     runs: |
@@ -57,7 +55,6 @@ pipeline:
       cd "${{targets.contextdir}}"
       python3 -m pip install --no-cache-dir build setuptools wheel
       python3 -m build --wheel --no-isolation --outdir wheelhouse
-
   - name: Install rss-server wheel into rootfs
     runs: |
       python3 -m pip install \
@@ -65,7 +62,6 @@ pipeline:
         --find-links="${{targets.contextdir}}/wheelhouse" \
         rss-server \
         --root="${{targets.destdir}}"
-
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do
@@ -75,7 +71,6 @@ pipeline:
           rm -rf "${{targets.destdir}}/$dir"
         fi
       done
-
   - name: Cleanup unnecessary Python artifacts
     runs: |
       find "${{targets.destdir}}" -name '*.pyc' -delete
