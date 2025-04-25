@@ -29,7 +29,7 @@ pipeline:
   - name: Build tzlocal wheel
     runs: |
       pip wheel tzlocal --wheel-dir /package
-      pip install --no-index --find-links=/package tzlocal --prefix=/usr --root "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package tzlocal --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

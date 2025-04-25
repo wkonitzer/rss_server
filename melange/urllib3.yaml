@@ -29,7 +29,7 @@ pipeline:
   - name: Build urllib3 wheel
     runs: |
       pip wheel urllib3 --wheel-dir /package
-      pip install --no-index --find-links=/package urllib3 --prefix=/usr --root "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package urllib3 --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do

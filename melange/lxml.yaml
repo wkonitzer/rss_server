@@ -29,7 +29,7 @@ pipeline:
   - name: Build lxml wheel
     runs: |
       pip wheel lxml --wheel-dir /package
-      pip install --no-index --find-links=/package lxml --prefix=/usr --root "${{targets.destdir}}"
+      pip install --no-deps --no-index --find-links=/package lxml --prefix=/usr --root "${{targets.destdir}}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do
