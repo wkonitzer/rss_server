@@ -32,8 +32,8 @@ jobs:
         run: |
           cp -r wolfi-os/pipelines/py melange-src/pkg/build/pipelines/
           cd melange-src
-          go install ./cmd/melange
-          mv "$(go env GOPATH)/bin/melange" /usr/local/bin/melange    
+          go build -o melange .
+          sudo mv melange /usr/local/bin/melange   
 
       - name: Install latest apko
         run: |
