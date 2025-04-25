@@ -29,14 +29,13 @@ pipeline:
   - name: Prepare build context
     runs: |
       mkdir -p "${{targets.contextdir}}"
-
-      # copy your five modules
+      
       cp \
-        ../app.py \
-        ../get_latest_release.py \
-        ../config.py \
-        ../fetch_functions.py \
-        ../product_utils.py \
+        "${{package.srcdir}}"/app.py \
+        "${{package.srcdir}}"/get_latest_release.py \
+        "${{package.srcdir}}"/config.py \
+        "${{package.srcdir}}"/fetch_functions.py \
+        "${{package.srcdir}}"/product_utils.py \
         "${{targets.contextdir}}"/
 
       # build-system metadata
