@@ -160,22 +160,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3  
 
-      - name: Checkout Wolfi OS pipelines
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3             
+        with:
+          repository: chainguard-dev/melange
+          path: melange-src
+
+      - uses: actions/checkout@v3             
         with:
           repository: wolfi-dev/os
           path: wolfi-os
 
-      - name: Vendor Wolfi python pipelines
+      - name: Merge pipelines & build melange
         run: |
-          mkdir -p melange/pipelines/py
-          mkdir -p pipelines/py
-          cp -R wolfi-os/pipelines/py/* melange/pipelines/py/
-          cp -R wolfi-os/pipelines/py/* pipelines/py/     
+          cp -r wolfi-os/pipelines/py melange-src/pkg/build/pipelines/
+          cd melange-src
+          go build -o melange .
+          sudo mv melange /usr/local/bin/melange 
 
-          ls -l melange/pipelines/py || true
-
-      - name: Install latest melange and apko
+      - name: Install latest apko
         run: |
           install_latest_release() {
             TOOL_NAME=$1
@@ -203,7 +205,6 @@ jobs:
       
           sudo apt-get update && sudo apt-get install -y jq
       
-          install_latest_release melange chainguard-dev/melange
           install_latest_release apko chainguard-dev/apko
 
       - name: Verify CLI tools
