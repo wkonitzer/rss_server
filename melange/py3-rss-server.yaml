@@ -51,7 +51,7 @@ pipeline:
 
   - name: Install rss-server wheel into rootfs
     runs: |
-      python3 -m pip install --no-index --find-links=/package rss-server --root="${{targets.destdir}}"
+      python3 -m pip install --no-index --find-links="${{targets.contextdir}}" rss-server --root="${{targets.destdir}}"
 
   - name: Enforce usrmerge layout
     runs: |
