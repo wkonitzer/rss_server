@@ -26,7 +26,6 @@ environment:
       - build-base
 
 pipeline:
-pipeline:
   - name: Prepare build context
     runs: |
       mkdir -p "${{targets.contextdir}}"
