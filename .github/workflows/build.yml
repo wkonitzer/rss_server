@@ -150,7 +150,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-        - name: Checkout Melange pipelines
+      - name: Checkout Melange pipelines
         uses: actions/checkout@v3
         with:
           repository: chainguard-dev/melange
