@@ -140,7 +140,7 @@ jobs:
 
       - name: Test arm64 container
         run: |
-          CONTAINER_ID=$(docker run -d --platform=linux/arm64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64)
+          CONTAINER_ID=$(docker run --platform=linux/arm64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64)
           echo "🟡 Waiting for logs..."
           sleep 5
           echo "📜 Container logs:"
