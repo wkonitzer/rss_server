@@ -59,4 +59,6 @@ paths:
 entrypoint:
   command: python
 
-cmd: "-m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app --access-logfile - --access-logformat %({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%(r)s\" %(s)s -"
+cmd: |
+  -m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app --access-logfile - --access-logformat "%({X-Forwarded-For}i)s %(h)s - - [%(t)s] \"%({r})s\" %(s)s -"
+
