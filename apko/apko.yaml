@@ -1,3 +1,5 @@
+include: github.com/chainguard-images/images/python/apko.yaml@latest
+
 archs:
   - x86_64
   - aarch64
@@ -38,24 +40,23 @@ contents:
     - py3-tzlocal@local
     - py3-urllib3@local
     - py3-werkzeug@local
-    - python3
-
-entrypoint: 
-  command: python -m gunicorn --preload -w 1 -b 0.0.0.0:4000 app:app
 
 work-dir: /app
 
 accounts:
   run-as: nonroot
 
-accounts:
-  users:
-    - username: nonroot
-      uid: 65532
-      shell: /sbin/nologin
-  run-as: nonroot  
-
 paths:
   - path: /app
     type: directory
     permissions: 755
+
+cmd:
+  - "-m"
+  - "gunicorn"
+  - "--preload"
+  - "-w"
+  - "1"
+  - "-b"
+  - "0.0.0.0:4000"
+  - "app:app"    
