@@ -124,7 +124,12 @@ jobs:
           done      
 
           ls -lh build
-          cat build/*              
+          cat build/*    
+
+      - name: Build minimal container for builds
+        run: |
+          apko build --arch x86_64 apko/wolfi-builder.apko.yaml wolfi-builder:latest wolfi-builder.tar
+          docker load < wolfi-builder.tar              
 
       - name: Build all Python packages with melange
         run: |
@@ -132,12 +137,11 @@ jobs:
           mkdir -p packages/x86_64 packages/aarch64
 
           find melange -name '*.yaml' ! -name 'vars.yaml' ! -name 'common.yaml' \
-          | parallel -j 3 './wolfi-build.sh {} \
+          | parallel -j 3 '(./wolfi-build.sh x86_64 {} \
               --source-dir . \
               --arch x86_64 \
               --out-dir packages \
-              --signing-key melange/melange.rsa \
-              --runner docker || true'
+              --signing-key melange/melange.rsa) || true'
                
       - name: list files and check index
         run: |
