@@ -26,10 +26,12 @@ environment:
       - build-base
 
 pipeline:
-  # 1) copy your .py files into the pipeline's contextdir so 'python -m build' sees them
-  - name: Copy source files
+pipeline:
+  - name: Prepare build context
     runs: |
       mkdir -p "${{targets.contextdir}}"
+
+      # copy your five modules
       cp \
         ../app.py \
         ../get_latest_release.py \
@@ -37,6 +39,27 @@ pipeline:
         ../fetch_functions.py \
         ../product_utils.py \
         "${{targets.contextdir}}"/
+
+      # build-system metadata
+      echo "[build-system]" > "${{targets.contextdir}}/pyproject.toml"
+      echo "requires = [\"setuptools\", \"wheel\"]" >> "${{targets.contextdir}}/pyproject.toml"
+      echo "build-backend = \"setuptools.build_meta\"" >> "${{targets.contextdir}}/pyproject.toml"
+
+      # package metadata & modules list
+      echo "[metadata]" > "${{targets.contextdir}}/setup.cfg"
+      echo "name = rss-server" >> "${{targets.contextdir}}/setup.cfg"
+      echo "version = 1.0.13" >> "${{targets.contextdir}}/setup.cfg"
+      echo "" >> "${{targets.contextdir}}/setup.cfg"
+      echo "[options]" >> "${{targets.contextdir}}/setup.cfg"
+      echo "py_modules =" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    app" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    get_latest_release" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    config" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    fetch_functions" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    product_utils" >> "${{targets.contextdir}}/setup.cfg"
+      echo "" >> "${{targets.contextdir}}/setup.cfg"
+      echo "install_requires =" >> "${{targets.contextdir}}/setup.cfg"
+      echo "    # add runtime deps here, e.g. requests" >> "${{targets.contextdir}}/setup.cfg"
 
   - uses: python/build-wheel
 
