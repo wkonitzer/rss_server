@@ -25,37 +25,20 @@ environment:
       - py3-wheel
       - build-base
 
-data:
-  - paths:
-      - source: app.py
-        destination: rss_server/app.py
-      - source: config.py
-        destination: rss_server/config.py
-      - source: fetch_functions.py
-        destination: rss_server/fetch_functions.py
-      - source: get_latest_release.py
-        destination: rss_server/get_latest_release.py
-      - source: product_utils.py
-        destination: rss_server/product_utils.py
-      - source: __init__.py
-        destination: rss_server/__init__.py
-
 pipeline:
-  - name: Build rss-server wheel
-  - name: Build rss-server wheel
+  # 1) copy your .py files into the pipeline's contextdir so 'python -m build' sees them
+  - name: Copy source files
     runs: |
-      echo '[build-system]' > pyproject.toml
-      echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-      echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+      mkdir -p "${{targets.contextdir}}"
+      cp \
+        ../app.py \
+        ../get_latest_release.py \
+        ../config.py \
+        ../fetch_functions.py \
+        ../product_utils.py \
+        "${{targets.contextdir}}"/
 
-      echo '[metadata]' > setup.cfg
-      echo 'name = rss-server' >> setup.cfg
-      echo 'version = 1.0.13' >> setup.cfg
-      echo '' >> setup.cfg
-      echo '[options]' >> setup.cfg
-      echo 'packages = find:' >> setup.cfg
-
-      python3 -m pip wheel . --wheel-dir /package
+  - uses: python/build-wheel
 
   - name: Install rss-server wheel into rootfs
     runs: |
