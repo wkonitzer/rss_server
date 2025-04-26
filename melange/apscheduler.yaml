@@ -47,7 +47,7 @@ subpackages:
         - py${{range.key}}-tzlocal
         - py${{range.key}}-typing_extensions
     pipeline:
-      - uses: pipeline/pkg-install
+      - uses: pkg-install
         with:
           packages: python-${{range.key}}    
       - uses: py/pip-build-install
