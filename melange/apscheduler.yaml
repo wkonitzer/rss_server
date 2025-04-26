@@ -46,10 +46,7 @@ subpackages:
         - py${{range.key}}-tenacity
         - py${{range.key}}-tzlocal
         - py${{range.key}}-typing_extensions
-    pipeline:
-      - uses: pkg-install
-        with:
-          packages: python-${{range.key}}    
+    pipeline:   
       - uses: py/pip-build-install
         with:
           python: python${{range.key}}
