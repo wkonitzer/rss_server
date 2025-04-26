@@ -50,6 +50,8 @@ subpackages:
       - uses: py/pip-build-install
         with:
           python: python${{range.key}}
+          packages:
+            - python-${{range.key}}
     test:
       pipeline:
         - uses: python/import
