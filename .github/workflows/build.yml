@@ -137,11 +137,31 @@ jobs:
           mkdir -p packages/x86_64 packages/aarch64
 
           find melange -name '*.yaml' ! -name 'vars.yaml' ! -name 'common.yaml' \
-          | parallel -j 3 '(./wolfi-build.sh x86_64 {} \
-              --source-dir . \
-              --arch x86_64 \
-              --out-dir packages \
-              --signing-key melange/melange.rsa) || true'
+          | parallel -j 3 '(
+              package_name=$(basename {} .yaml)
+              echo "[${package_name}] Building..."
+              if ./wolfi-build.sh x86_64 {} \
+                  --source-dir . \
+                  --arch x86_64 \
+                  --out-dir packages \
+                  --signing-key melange/melange.rsa; then
+                echo "[${package_name}] Success!"
+              else
+                echo "[${package_name}] FAILED!"
+              fi
+              echo "---"
+          ) || true'
+
+          # After all parallel jobs finish
+          echo
+          echo "========= BUILD SUMMARY ========="
+          if [ -s "${FAILURES_FILE}" ]; then
+            echo "FAILED packages:"
+            cat "${FAILURES_FILE}"
+          else
+            echo "All packages built successfully! 🎉"
+          fi
+          rm -f "${FAILURES_FILE}"          
                
       - name: list files and check index
         run: |
