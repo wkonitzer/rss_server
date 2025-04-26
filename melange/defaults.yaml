@@ -8,10 +8,6 @@ environment:
       - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
 
     packages:
-      - python-3.10
-      - python-3.11
-      - python-3.12
-      - python-3.13
       - busybox
       - py3-supported-python
       - py3-supported-pip
