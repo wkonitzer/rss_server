@@ -131,12 +131,13 @@ jobs:
             PYPI_PACKAGE=$(yq eval '.vars.pypi-package' "build/$(basename "$pkg")" | tr -d '"')
 
             # Keep only the subpackages for this python version and py3-supported
-            yq eval "
+            yq eval --expression '
               .subpackages |= (
-                map(select(.name == \"py${PYTHON_VERSION//.}-\" + strenv(PYPKG))) +
-                map(select(.name == \"py3-supported-\" + strenv(PYPKG)))
+                map(select(.name == "py'"${PYTHON_VERSION//.}"'-" + strenv(PYPKG))) +
+                map(select(.name == "py3-supported-" + strenv(PYPKG)))
               )
-            " PYPKG="$PYPI_PACKAGE" "build/$(basename "$pkg")" > "build/$(basename "$pkg").tmp"
+            ' --arg PYPKG "$PYPI_PACKAGE" "build/$(basename "$pkg")" > "build/$(basename "$pkg").tmp"
+
 
             mv "build/$(basename "$pkg").tmp" "build/$(basename "$pkg")"
           done      
