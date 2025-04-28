@@ -136,11 +136,11 @@ jobs:
           sudo apt-get install -y parallel
           mkdir -p packages/x86_64 packages/aarch64
 
-          find melange -name '*.yaml' ! -name 'vars.yaml' ! -name 'common.yaml' \
+          find melange -name '*.yaml' ! -name 'defaults.yaml' \
           | parallel -j 3 '(
               package_name=$(basename {} .yaml)
               echo "[${package_name}] Building..."
-              if ./wolfi-build.sh x86_64 {} \
+              if ./wolfi-build.sh x86_64 3.13 {} \
                   --source-dir . \
                   --arch x86_64 \
                   --out-dir packages \
