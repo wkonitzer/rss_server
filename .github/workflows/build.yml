@@ -115,16 +115,35 @@ jobs:
         run: |
           rm -rf build && mkdir build
 
+          # Set which Python version to build (default to 3.13 if not set)
+          PYTHON_VERSION="${PYTHON_VERSION:-3.13}"
+          echo "📦 Will keep only py${PYTHON_VERSION//.}-<package> subpackages"
+
           for pkg in melange/*.yaml; do
             [ "$(basename "$pkg")" = "defaults.yaml" ] && continue
 
+            # Merge defaults.yaml + package.yaml
             yq eval-all '. as $defaults ireduce ({}; . *+ $defaults )' \
               melange/defaults.yaml "$pkg" \
               > build/"$(basename "$pkg")"
+
+            # Extract the pypi-package name from merged yaml
+            PYPI_PACKAGE=$(yq eval '.vars.pypi-package' "build/$(basename "$pkg")" | tr -d '"')
+
+            # Keep only the subpackages for this python version and py3-supported
+            yq eval "
+              .subpackages |= (
+                map(select(.name == \"py${PYTHON_VERSION//.}-\" + strenv(PYPKG))) +
+                map(select(.name == \"py3-supported-\" + strenv(PYPKG)))
+              )
+            " PYPKG="$PYPI_PACKAGE" "build/$(basename "$pkg")" > "build/$(basename "$pkg").tmp"
+
+            mv "build/$(basename "$pkg").tmp" "build/$(basename "$pkg")"
           done      
 
           ls -lh build
-          cat build/*    
+          cat build/*
+   
 
       - name: Build minimal container for builds
         run: |
@@ -140,7 +159,7 @@ jobs:
           | parallel -j 3 '(
               package_name=$(basename {} .yaml)
               echo "[${package_name}] Building..."
-              if ./wolfi-build.sh x86_64 3.13 {} \
+              if ./wolfi-build.sh x86_64 {} \
                   --source-dir . \
                   --arch x86_64 \
                   --out-dir packages \
