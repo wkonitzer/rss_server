@@ -127,17 +127,19 @@ jobs:
               melange/defaults.yaml "$pkg" \
               > build/"$(basename "$pkg")"
 
-            # Extract the pypi-package name from merged yaml
+            # Extract pypi-package
             PYPI_PACKAGE=$(yq eval '.vars.pypi-package' "build/$(basename "$pkg")" | tr -d '"')
 
-            # Keep only the subpackages for this python version and py3-supported
-            yq eval --expression '
+            # Export the package name
+            export PYPKG="$PYPI_PACKAGE"
+
+            # Filter using strenv() inside the yq expression
+            yq eval '
               .subpackages |= (
                 map(select(.name == "py'"${PYTHON_VERSION//.}"'-" + strenv(PYPKG))) +
                 map(select(.name == "py3-supported-" + strenv(PYPKG)))
               )
-            ' --arg PYPKG "$PYPI_PACKAGE" "build/$(basename "$pkg")" > "build/$(basename "$pkg").tmp"
-
+            ' "build/$(basename "$pkg")" > "build/$(basename "$pkg").tmp"
 
             mv "build/$(basename "$pkg").tmp" "build/$(basename "$pkg")"
           done      
