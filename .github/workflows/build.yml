@@ -165,7 +165,7 @@ jobs:
 
       - name: Rebuild and sign APKINDEX
         run: |
-          melange index --signing-key melange/melange.rsa ./packages/x86_64          
+          melange index --signing-key melange/melange.rsa ./packages/x86_64/*.apk          
 
       - name: Show contents of APKINDEX.tar.gz
         run: |
