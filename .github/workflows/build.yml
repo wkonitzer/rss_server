@@ -91,7 +91,7 @@ jobs:
       - name: Build packages
         run: |
           mkdir -p packages/${{ matrix.arch.arch }}
-          find melange -name '*.yaml' | parallel -j 3 '
+          find melange -name '*.yaml' | parallel -j 1 '
             melange build {} --source-dir . \
               --arch ${{ matrix.arch.arch }} \
               --out-dir packages \
