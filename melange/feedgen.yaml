@@ -39,7 +39,7 @@ pipeline:
 
   - name: Install feedgen without build isolation
     runs: |
-      python3 -m pip install --prefix=/usr --root="${{targets.destdir}}" --no-build-isolation --no-deps .
+      python3 -m pip install --prefix=/usr --root="${{targets.destdir}}" --no-build-isolation --no-use-pep517 --no-deps .
 
 test:
   pipeline:
