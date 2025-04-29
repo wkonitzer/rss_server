@@ -40,9 +40,18 @@ jobs:
           install_latest_release() {
             TOOL_NAME=$1
             GH_REPO=$2
-            ARCH="linux_amd64"
 
-            echo "Fetching latest release for $TOOL_NAME..."
+            # Map architecture to GitHub release naming
+            if [ "${{ matrix.arch.arch }}" = "x86_64" ]; then
+              ARCH="linux_amd64"
+            elif [ "${{ matrix.arch.arch }}" = "aarch64" ]; then
+              ARCH="linux_arm64"
+            else
+              echo "Unsupported architecture: ${{ matrix.arch.arch }}"
+              exit 1
+            fi
+
+            echo "Fetching latest release for $TOOL_NAME ($ARCH)..."
             LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
 
             if [ "$TOOL_NAME" = "yq" ]; then
@@ -67,7 +76,14 @@ jobs:
           install_latest_release apko chainguard-dev/apko
           install_latest_release yq mikefarah/yq
 
-          # melange build
+      - name: Checkout melange stable version
+        run: |
+          cd melange-src
+          git fetch --tags
+          git checkout v0.23.10          
+
+      - name: Merge pipelines & build melange
+        run: |
           cp -r wolfi-os/pipelines/py melange-src/pkg/build/pipelines/
           cd melange-src
           go build -o melange .
