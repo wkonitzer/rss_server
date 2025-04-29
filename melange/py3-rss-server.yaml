@@ -61,7 +61,7 @@ environment:
 pipeline:
   - uses: git-checkout
     with:
-      repository: https://github.com/wkonitzer/rss-server
+      repository: https://github.com/wkonitzer/rss_server
       tag: v${{package.version}}
       expected-commit: 43812ce553ee1bdf02e0f8e3016a4a0570fba33e
 
@@ -84,5 +84,5 @@ test:
 update:
   enabled: true
   github:
-    identifier: wkonitzer/rss-server
+    identifier: wkonitzer/rss_server
     strip-prefix: v
