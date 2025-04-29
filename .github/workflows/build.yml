@@ -54,27 +54,17 @@ jobs:
             echo "Fetching latest release for $TOOL_NAME ($ARCH)..."
             LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
 
-            if [ "$TOOL_NAME" = "yq" ]; then
-              ASSET="yq_${ARCH}"
-              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
-              OUT="${ASSET}"
-              curl -sL "$URL" -o "$OUT"
-              chmod +x "${OUT}"
-              sudo install -m0755 "${OUT}" /usr/local/bin/yq
-            else
-              ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
-              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
-              OUT="${TOOL_NAME}.tar.gz"
-              curl -sL "$URL" -o "$OUT"
-              tar -xzf "$OUT"
-              sudo install -m0755 $(find . -type f -name "$TOOL_NAME" -executable) /usr/local/bin/$TOOL_NAME
-            fi
+            ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
+            URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
+            OUT="${TOOL_NAME}.tar.gz"
+            curl -sL "$URL" -o "$OUT"
+            tar -xzf "$OUT"
+            sudo install -m0755 $(find . -type f -name "$TOOL_NAME" -executable) /usr/local/bin/$TOOL_NAME
 
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
 
           install_latest_release apko chainguard-dev/apko
-          install_latest_release yq mikefarah/yq
 
       - name: Checkout melange stable version
         run: |
@@ -93,7 +83,6 @@ jobs:
         run: |
           command -v melange && melange version
           command -v apko && apko version
-          command -v yq && yq --version
 
       - name: Generate signing key
         run: |
