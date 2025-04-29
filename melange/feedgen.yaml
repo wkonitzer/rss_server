@@ -37,9 +37,9 @@ pipeline:
       tag: v${{package.version}}
       expected-commit: 97260abb1793eb164c458c10b493690beb413f6d
 
-  - uses: py/setup-py-install
-    with:
-      python: python3
+  - name: Install feedgen without build isolation
+    runs: |
+      python3 -m pip install --prefix=/usr --root="${{targets.destdir}}" --no-build-isolation --no-deps .
 
 test:
   pipeline:
