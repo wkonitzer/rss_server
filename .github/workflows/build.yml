@@ -41,24 +41,30 @@ jobs:
           go build -o melange .
           sudo mv melange /usr/local/bin/melange   
 
-      - name: Install latest apko and yq
+      - name: Install apko and yq
         run: |
-          install_latest_release() {
+          install_release() {
             TOOL_NAME=$1
             GH_REPO=$2
+            VERSION=${3:-latest} # <-- default to "latest" if no 3rd param given
             ARCH="linux_amd64"
 
-            echo "Fetching latest release for $TOOL_NAME..."
-            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest \
-              | jq -r '.tag_name')
+            if [ "$VERSION" = "latest" ]; then
+              echo "Fetching latest release for $TOOL_NAME..."
+              VERSION=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
+            else
+              echo "Using specified version $VERSION for $TOOL_NAME..."
+            fi
 
             if [ "$TOOL_NAME" = "yq" ]; then
               ASSET="yq_${ARCH}"
-              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
+              URL="https://github.com/${GH_REPO}/releases/download/${VERSION}/${ASSET}"
               OUT="${ASSET}"
             else
-              ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
-              URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
+              # Remove leading 'v' if present when forming asset name
+              CLEAN_VERSION=${VERSION#v}
+              ASSET="${TOOL_NAME}_${CLEAN_VERSION}_${ARCH}.tar.gz"
+              URL="https://github.com/${GH_REPO}/releases/download/${VERSION}/${ASSET}"
               OUT="${TOOL_NAME}.tar.gz"
             fi
 
@@ -79,8 +85,12 @@ jobs:
 
           sudo apt-get update && sudo apt-get install -y jq
 
-          install_latest_release apko chainguard-dev/apko
-          install_latest_release yq mikefarah/yq
+          # Install specific version of apko
+          install_release apko chainguard-dev/apko v0.22.7
+
+          # Install latest yq
+          install_release yq mikefarah/yq
+
 
       - name: Verify CLI tools
         run: |
