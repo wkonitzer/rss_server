@@ -2,12 +2,45 @@ package:
   name: py3-rss-server
   version: 1.0.13
   epoch: 0
-  description: "Modular RSS Server application"
+  description: Modular RSS Server application
   target-architecture:
     - x86_64
     - aarch64
   copyright:
     - license: MIT
+  dependencies:
+    runtime:
+      - python3
+      - py3-apscheduler
+      - py3-beautifulsoup4
+      - py3-blinker
+      - py3-certifi
+      - py3-charset-normalizer
+      - py3-click
+      - py3-feedgen
+      - py3-feedgenerator
+      - py3-flask
+      - py3-gunicorn
+      - py3-idna
+      - py3-iniconfig
+      - py3-itsdangerous
+      - py3-jinja2
+      - py3-lxml
+      - py3-markupsafe
+      - py3-packaging
+      - py3-pluggy
+      - py3-prometheus-client
+      - py3-prometheus-flask-exporter
+      - py3-python-dateutil
+      - py3-pytz
+      - py3-pyyaml
+      - py3-requests
+      - py3-six
+      - py3-soupsieve
+      - py3-tzlocal
+      - py3-typing-extensions
+      - py3-urllib3
+      - py3-werkzeug
 
 environment:
   contents:
@@ -26,58 +59,30 @@ environment:
       - build-base
 
 pipeline:
-  - name: Prepare build context
-    runs: |
-      mkdir -p "${{targets.contextdir}}"/wheelhouse
-      # copy modules
-      cp \
-        "${{package.srcdir}}"/app.py \
-        "${{package.srcdir}}"/get_latest_release.py \
-        "${{package.srcdir}}"/config.py \
-        "${{package.srcdir}}"/fetch_functions.py \
-        "${{package.srcdir}}"/product_utils.py \
-        "${{targets.contextdir}}"/
+  - uses: git-checkout
+    with:
+      repository: https://github.com/wkonitzer/rss-server
+      tag: v${{package.version}}
+      expected-commit: 43812ce553ee1bdf02e0f8e3016a4a0570fba33e
 
-      # write metadata
-      echo "[build-system]" > "${{targets.contextdir}}/pyproject.toml"
-      echo "requires = [\"setuptools\",\"wheel\"]" >> "${{targets.contextdir}}/pyproject.toml"
-      echo "build-backend = \"setuptools.build_meta\"" >> "${{targets.contextdir}}/pyproject.toml"
-      echo "[metadata]" > "${{targets.contextdir}}/setup.cfg"
-      echo "name = rss-server" >> "${{targets.contextdir}}/setup.cfg"
-      echo "version = 1.0.13" >> "${{targets.contextdir}}/setup.cfg"
-      echo "[options]" >> "${{targets.contextdir}}/setup.cfg"
-      echo "py_modules =" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    app" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    get_latest_release" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    config" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    fetch_functions" >> "${{targets.contextdir}}/setup.cfg"
-      echo "    product_utils" >> "${{targets.contextdir}}/setup.cfg"
+  - uses: py/pip-build-install
+    with:
+      python: python3
 
-      # actually build the wheel into wheelhouse
-      cd "${{targets.contextdir}}"
-      python3 -m pip install --no-cache-dir build setuptools wheel
-      python3 -m build --wheel --no-isolation --outdir wheelhouse
+test:
+  pipeline:
+    - uses: python/import
+      with:
+        python: python3
+        imports: |
+          import app
+          import get_latest_release
+          import config
+          import fetch_functions
+          import product_utils
 
-  - name: Install rss-server wheel into rootfs
-    runs: |
-      python3 -m pip install \
-        --no-index \
-        --find-links="${{targets.contextdir}}/wheelhouse" \
-        rss-server \
-        --root="${{targets.destdir}}"
-
-  - name: Enforce usrmerge layout
-    runs: |
-      for dir in bin sbin usr/sbin; do
-        if [ -d "${{targets.destdir}}/$dir" ]; then
-          mkdir -p "${{targets.destdir}}/usr/bin"
-          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
-          rm -rf "${{targets.destdir}}/$dir"
-        fi
-      done
-
-  - name: Cleanup unnecessary Python artifacts
-    runs: |
-      find "${{targets.destdir}}" -name '*.pyc' -delete
-      find "${{targets.destdir}}" -name '*.pyo' -delete
-      find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
+update:
+  enabled: true
+  github:
+    identifier: wkonitzer/rss-server
+    strip-prefix: v
