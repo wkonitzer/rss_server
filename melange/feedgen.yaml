@@ -37,7 +37,7 @@ pipeline:
       tag: v${{package.version}}
       expected-commit: 97260abb1793eb164c458c10b493690beb413f6d
 
-  - uses: py/pip-build-install
+  - uses: py/setup-py-install
     with:
       python: python3
 
