@@ -3,6 +3,9 @@ package:
   version: "3.11.0"
   epoch: 0
   description: Python job scheduling library
+  target-architecture:
+    - x86_64
+    - aarch64  
   copyright:
     - license: MIT
   dependencies:
@@ -19,7 +22,14 @@ data:
 
 environment:
   contents:
+    repositories:
+      - https://packages.wolfi.dev/bootstrap/stage3
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - busybox
       - python3
       - py3-pip
       - py3-setuptools

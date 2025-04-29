@@ -110,26 +110,7 @@ jobs:
 
       - name: Remove melange build cache
         run: rm -rf ./melange-cache/   
-
-      - name: Create build files
-        run: |
-          rm -rf build && mkdir build
-
-          for pkg in melange/*.yaml; do
-            [ "$(basename "$pkg")" = "defaults.yaml" ] && continue
-
-            yq eval-all '. as $defaults ireduce ({}; . *+ $defaults )' \
-              melange/defaults.yaml "$pkg" \
-              > build/"$(basename "$pkg")"
-          done      
-
-          ls -lh build
-          cat build/*    
-
-      - name: Build minimal container for builds
-        run: |
-          apko build --arch x86_64 apko/wolfi-builder.apko.yaml wolfi-builder:latest wolfi-builder.tar
-          docker load < wolfi-builder.tar              
+                
 
       - name: Build all Python packages with melange
         run: |
