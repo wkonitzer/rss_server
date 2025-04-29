@@ -44,6 +44,10 @@ pipeline:
     with:
       python: python3
 
+  - name: Cleanup unnecessary Python artifacts
+    runs: |
+      find "${{targets.destdir}}" -name '*.pyc' -delete     
+
 test:
   pipeline:
     - uses: python/import
