@@ -2,7 +2,7 @@ package:
   name: py3-feedgen
   version: 1.0.0
   epoch: 0
-  description: "Python package feedgen"
+  description: Python package feedgen
   target-architecture:
     - x86_64
     - aarch64
@@ -10,7 +10,9 @@ package:
     - license: MIT
   dependencies:
     runtime:
-      - py3-lxml    
+      - python3
+      - py3-lxml
+      - py3-python-dateutil
 
 environment:
   contents:
@@ -29,22 +31,25 @@ environment:
       - build-base
 
 pipeline:
-  - name: Build feedgen wheel
-    runs: |
-      pip wheel feedgen --wheel-dir /package
-      pip install --no-deps --no-index --find-links=/package feedgen --prefix=/usr --root "${{targets.destdir}}"
-  - name: Enforce usrmerge layout
-    runs: |
-      for dir in bin sbin usr/sbin; do
-        if [ -d "${{targets.destdir}}/$dir" ]; then
-          mkdir -p "${{targets.destdir}}/usr/bin"
-          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
-          rm -rf "${{targets.destdir}}/$dir"
-        fi
-      done     
+  - uses: git-checkout
+    with:
+      repository: https://github.com/lkiesow/python-feedgen
+      tag: v${{package.version}}
+      expected-commit: 97260abb1793eb164c458c10b493690beb413f6d
 
-  - name: Cleanup unnecessary Python artifacts
+  - name: Install feedgen via setup.py directly
     runs: |
-      find "${{targets.destdir}}" -name '*.pyc' -delete
-      find "${{targets.destdir}}" -name '*.pyo' -delete
-      find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
+      python3 setup.py install --prefix=/usr --root="${{targets.destdir}}"
+
+test:
+  pipeline:
+    - uses: python/import
+      with:
+        python: python3
+        imports: |
+          import feedgen
+
+update:
+  enabled: true
+  github:
+    identifier: lkiesow/python-feedgen
