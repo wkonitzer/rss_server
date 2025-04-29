@@ -20,7 +20,8 @@ data:
 environment:
   contents:
     packages:
-      - build-base                
+      - build-base
+      - python3                
 
 pipeline:
   - uses: git-checkout
