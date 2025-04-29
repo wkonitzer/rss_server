@@ -86,7 +86,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y jq
 
           # Install specific version of apko
-          install_release apko chainguard-dev/apko v0.22.7
+          install_release apko chainguard-dev/apko
 
           # Install latest yq
           install_release yq mikefarah/yq
@@ -188,7 +188,7 @@ jobs:
 
       - name: Build container images for both archs with apko
         run: |
-          APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
+          APKO_RUNNER=none apko build --debug --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
 
       - name: Load and tag both images
         run: |
