@@ -44,6 +44,7 @@ contents:
     - py3-six
     - py3-soupsieve
     - py3-tzlocal
+    - py3-typing-extensions
     - py3-urllib3
     - py3-werkzeug
     - python3
