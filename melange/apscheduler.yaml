@@ -56,7 +56,7 @@ subpackages:
         - py${{range.key}}-attrs
         - py${{range.key}}-tenacity
         - py${{range.key}}-tzlocal
-        - py${{range.key}}-typing_extensions
+        - py${{range.key}}-typing-extensions
     pipeline:   
       - uses: py/pip-build-install
         with:
