@@ -11,12 +11,17 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-amd64:
-    runs-on: ubuntu-latest   
+  build-images:
+    strategy:
+      matrix:
+        arch:
+          - { runner: ubuntu-latest, arch: x86_64, docker_platform: linux/amd64, suffix: amd64 }
+          - { runner: ubuntu-24.04-arm, arch: aarch64, docker_platform: linux/arm64, suffix: arm64 }
+
+    runs-on: ${{ matrix.arch.runner }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - uses: actions/checkout@v3             
         with:
@@ -28,369 +33,113 @@ jobs:
           repository: wolfi-dev/os
           path: wolfi-os
 
-      - name: Checkout melange stable version
+      - name: Setup CLI Tools (melange, apko, yq)
         run: |
-          cd melange-src
-          git fetch --tags
-          git checkout v0.23.10
+          sudo apt-get update && sudo apt-get install -y jq parallel
 
-      - name: Merge pipelines & build melange
-        run: |
-          cp -r wolfi-os/pipelines/py melange-src/pkg/build/pipelines/
-          cd melange-src
-          go build -o melange .
-          sudo mv melange /usr/local/bin/melange   
-
-      - name: Install apko and yq
-        run: |
-          install_release() {
-            TOOL_NAME=$1
-            GH_REPO=$2
-            VERSION=${3:-latest} # <-- default to "latest" if no 3rd param given
-            ARCH="linux_amd64"
-
-            if [ "$VERSION" = "latest" ]; then
-              echo "Fetching latest release for $TOOL_NAME..."
-              VERSION=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
-            else
-              echo "Using specified version $VERSION for $TOOL_NAME..."
-            fi
-
-            if [ "$TOOL_NAME" = "yq" ]; then
-              ASSET="yq_${ARCH}"
-              URL="https://github.com/${GH_REPO}/releases/download/${VERSION}/${ASSET}"
-              OUT="${ASSET}"
-            else
-              # Remove leading 'v' if present when forming asset name
-              CLEAN_VERSION=${VERSION#v}
-              ASSET="${TOOL_NAME}_${CLEAN_VERSION}_${ARCH}.tar.gz"
-              URL="https://github.com/${GH_REPO}/releases/download/${VERSION}/${ASSET}"
-              OUT="${TOOL_NAME}.tar.gz"
-            fi
-
-            echo "Downloading $TOOL_NAME from $URL"
-            curl -sL "$URL" -o "$OUT"
-
-            if [ "$TOOL_NAME" = "yq" ]; then
-              chmod +x "${OUT}"
-              sudo install -m0755 "${OUT}" /usr/local/bin/yq
-            else
-              tar -xzf "$OUT"
-              BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n1)
-              sudo install -m0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
-            fi
-
-            echo "✅ Installed $TOOL_NAME to /usr/local/bin"
-          }
-
-          sudo apt-get update && sudo apt-get install -y jq
-
-          # Install specific version of apko
-          install_release apko chainguard-dev/apko
-
-          # Install latest yq
-          install_release yq mikefarah/yq
-
-
-      - name: Verify CLI tools
-        run: |
-          echo "Listing /usr/local/bin:"
-          ls -lah /usr/local/bin
-
-          echo "PATH is: $PATH"
-          env | grep PATH
-          
-          echo "Verifying melange..."
-          if ! command -v melange >/dev/null; then
-            echo "❌ melange not found in PATH"
-            exit 1
-          fi
-          melange version
-      
-          echo "Verifying apko..."
-          if ! command -v apko >/dev/null; then
-            echo "❌ apko not found in PATH"
-            exit 1
-          fi
-          apko version
-
-      - name: Generate signing key for this build
-        run: |
-          melange keygen melange/melange.rsa
-
-      - name: Remove melange build cache
-        run: rm -rf ./melange-cache/   
-                
-
-      - name: Build all Python packages with melange
-        run: |
-          sudo apt-get install -y parallel
-          mkdir -p packages/x86_64 packages/aarch64
-
-          find melange -name '*.yaml' ! -name 'defaults.yaml' \
-          | parallel -j 3 '(
-              package_name=$(basename {} .yaml)
-              echo "[${package_name}] Building..."
-              if ./wolfi-build.sh x86_64 {} \
-                  --source-dir . \
-                  --arch x86_64 \
-                  --out-dir packages \
-                  --signing-key melange/melange.rsa; then
-                echo "[${package_name}] Success!"
-              else
-                echo "[${package_name}] FAILED!"
-              fi
-              echo "---"
-          ) || true'
-
-          # After all parallel jobs finish
-          echo
-          echo "========= BUILD SUMMARY ========="
-          if [ -s "${FAILURES_FILE}" ]; then
-            echo "FAILED packages:"
-            cat "${FAILURES_FILE}"
-          else
-            echo "All packages built successfully! 🎉"
-          fi
-          rm -f "${FAILURES_FILE}"          
-               
-      - name: list files and check index
-        run: |
-          echo "📁 Current working directory:"
-          pwd
-
-          echo "📄 Listing contents of ./packages:"
-          ls -lh packages || true
-
-          echo "📄 Listing contents of ./packages/x86_64:"
-          ls -lh packages/x86_64 || true
-
-          echo "📄 Showing APKINDEX.tar.gz if it exists:"
-          file packages/x86_64/APKINDEX.tar.gz || echo "❌ APKINDEX not found"
-
-          echo "📄 Showing package files:"
-          find packages/x86_64 -type f -name '*.apk' || echo "❌ No .apk files found" 
-
-          ls -lah /home/runner/work/rss_server/rss_server/packages/x86_64/APKINDEX.tar.gz || echo "❌ Not found" 
-
-      - name: Rebuild and sign APKINDEX
-        run: |
-          melange index --signing-key melange/melange.rsa ./packages/x86_64/*.apk          
-
-      - name: Show contents of APKINDEX.tar.gz
-        run: |
-          echo "📦 Listing packages in APKINDEX:"
-          if [ -f packages/x86_64/APKINDEX.tar.gz ]; then
-            tar -xOzf packages/x86_64/APKINDEX.tar.gz APKINDEX | cat || echo "❌ No packages found in APKINDEX"
-          else
-            echo "❌ APKINDEX.tar.gz not found!"
-          fi                  
-
-      - name: Build container images for both archs with apko
-        run: |
-          APKO_RUNNER=none apko build --arch x86_64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-amd64.tar
-
-      - name: Load and tag both images
-        run: |
-          docker load < rss-server-amd64.tar
-
-      - name: Test x86_64 container
-        run: |
-          CONTAINER_ID=$(docker run -d --platform=linux/amd64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64)
-          echo "🟡 Waiting for logs..."
-          sleep 5
-          echo "📜 Container logs:"
-          docker logs $CONTAINER_ID
-          echo "🛑 Stopping container"
-          docker rm -f $CONTAINER_ID
-
-      - name: Push individual architecture images
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64
-
-
-  build-arm64:
-    runs-on: ubuntu-24.04-arm
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3  
-
-      - uses: actions/checkout@v3             
-        with:
-          repository: chainguard-dev/melange
-          path: melange-src
-
-      - uses: actions/checkout@v3             
-        with:
-          repository: wolfi-dev/os
-          path: wolfi-os
-
-      - name: Merge pipelines & build melange
-        run: |
-          cp -r wolfi-os/pipelines/py melange-src/pkg/build/pipelines/
-          cd melange-src
-          go build -o melange .
-          sudo mv melange /usr/local/bin/melange 
-
-      - name: Install latest apko and yq
-        run: |
           install_latest_release() {
             TOOL_NAME=$1
             GH_REPO=$2
             ARCH="linux_amd64"
 
             echo "Fetching latest release for $TOOL_NAME..."
-            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest \
-              | jq -r '.tag_name')
+            LATEST=$(curl -s https://api.github.com/repos/${GH_REPO}/releases/latest | jq -r '.tag_name')
 
             if [ "$TOOL_NAME" = "yq" ]; then
               ASSET="yq_${ARCH}"
               URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
               OUT="${ASSET}"
+              curl -sL "$URL" -o "$OUT"
+              chmod +x "${OUT}"
+              sudo install -m0755 "${OUT}" /usr/local/bin/yq
             else
               ASSET="${TOOL_NAME}_${LATEST#v}_${ARCH}.tar.gz"
               URL="https://github.com/${GH_REPO}/releases/download/${LATEST}/${ASSET}"
               OUT="${TOOL_NAME}.tar.gz"
-            fi
-
-            echo "Downloading $TOOL_NAME from $URL"
-            curl -sL "$URL" -o "$OUT"
-
-            if [ "$TOOL_NAME" = "yq" ]; then
-              chmod +x "${OUT}"
-              sudo install -m0755 "${OUT}" /usr/local/bin/yq
-            else
+              curl -sL "$URL" -o "$OUT"
               tar -xzf "$OUT"
-              BINARY_PATH=$(find . -type f -name "$TOOL_NAME" -executable | head -n1)
-              sudo install -m0755 "$BINARY_PATH" /usr/local/bin/$TOOL_NAME
+              sudo install -m0755 $(find . -type f -name "$TOOL_NAME" -executable) /usr/local/bin/$TOOL_NAME
             fi
 
             echo "✅ Installed $TOOL_NAME to /usr/local/bin"
           }
 
-          sudo apt-get update && sudo apt-get install -y jq
-
           install_latest_release apko chainguard-dev/apko
-          install_latest_release yq mikefarah/yq        
+          install_latest_release yq mikefarah/yq
+
+          # melange build
+          cp -r wolfi-os/pipelines/py melange-src/pkg/build/pipelines/
+          cd melange-src
+          go build -o melange .
+          sudo mv melange /usr/local/bin/melange
 
       - name: Verify CLI tools
         run: |
-          echo "Listing /usr/local/bin:"
-          ls -lah /usr/local/bin
+          command -v melange && melange version
+          command -v apko && apko version
+          command -v yq && yq --version
 
-          echo "PATH is: $PATH"
-          env | grep PATH
-          
-          echo "Verifying melange..."
-          if ! command -v melange >/dev/null; then
-            echo "❌ melange not found in PATH"
-            exit 1
-          fi
-          melange version
-      
-          echo "Verifying apko..."
-          if ! command -v apko >/dev/null; then
-            echo "❌ apko not found in PATH"
-            exit 1
-          fi
-          apko version
-
-      - name: Generate signing key for this build
+      - name: Generate signing key
         run: |
           melange keygen melange/melange.rsa
 
-      - name: Remove melange build cache
-        run: rm -rf ./melange-cache/     
-
-      - name: Create build files
+      - name: Prepare build files
         run: |
           rm -rf build && mkdir build
-
           for pkg in melange/*.yaml; do
             [ "$(basename "$pkg")" = "defaults.yaml" ] && continue
-
             yq eval-all '. as $defaults ireduce ({}; . *+ $defaults )' \
-              melange/defaults.yaml "$pkg" \
-              > build/"$(basename "$pkg")"
-          done     
+              melange/defaults.yaml "$pkg" > build/"$(basename "$pkg")"
+          done
 
-          ls -lh build
-          cat build/*        
-
-      - name: Build all Python packages with melange
+      - name: Build packages
         run: |
-          sudo apt-get install -y parallel
-          mkdir -p packages/x86_64 packages/aarch64
+          mkdir -p packages/${{ matrix.arch.arch }}
+          find build -name '*.yaml' | parallel -j 3 '
+            melange build {} --source-dir . \
+              --arch ${{ matrix.arch.arch }} \
+              --out-dir packages \
+              --signing-key melange/melange.rsa \
+              --runner docker || true
+          '
 
-          find build -name '*.yaml' | parallel -j 3 'melange build {} --source-dir . --arch aarch64 --out-dir packages --signing-key melange/melange.rsa --runner docker || true'                           
-
-      - name: list files and check index
+      - name: Build container image
         run: |
-          echo "📁 Current working directory:"
-          pwd
+          APKO_RUNNER=none apko build \
+            --arch ${{ matrix.arch.arch }} \
+            apko/apko.yaml \
+            ghcr.io/${{ github.repository_owner }}/rss-server \
+            rss-server-${{ matrix.arch.suffix }}.tar
 
-          echo "📄 Listing contents of ./packages:"
-          ls -lh packages || true
+      - name: Load container image
+        run: docker load < rss-server-${{ matrix.arch.suffix }}.tar
 
-          echo "📄 Listing contents of ./packages/x86_64:"
-          ls -lh packages/aarch64 || true
-
-          echo "📄 Showing APKINDEX.tar.gz if it exists:"
-          file packages/aarch64/APKINDEX.tar.gz || echo "❌ APKINDEX not found"
-
-          echo "📄 Showing package files:"
-          find packages/aarch64 -type f -name '*.apk' || echo "❌ No .apk files found" 
-
-          ls -lah /home/runner/work/rss_server/rss_server/packages/aarch64/APKINDEX.tar.gz || echo "❌ Not found" 
-
-      - name: Show contents of APKINDEX.tar.gz
+      - name: Test container image
         run: |
-          echo "📦 Listing packages in APKINDEX:"
-          if [ -f packages/aarch64/APKINDEX.tar.gz ]; then
-            tar -xOzf packages/aarch64/APKINDEX.tar.gz APKINDEX | cat || echo "❌ No packages found in APKINDEX"
-          else
-            echo "❌ APKINDEX.tar.gz not found!"
-          fi                  
-
-      - name: Build container images for both archs with apko
-        run: |
-          APKO_RUNNER=none apko build --arch aarch64 apko/apko.yaml ghcr.io/${{ github.repository_owner }}/rss-server rss-server-arm64.tar
-
-      - name: Load and tag both images
-        run: |
-          docker load < rss-server-arm64.tar
-
-      - name: Test arm64 container
-        run: |
-          CONTAINER_ID=$(docker run -d --platform=linux/arm64 ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64)
-          echo "🟡 Waiting for logs..."
+          CONTAINER_ID=$(docker run -d --platform=${{ matrix.arch.docker_platform }} ghcr.io/${{ github.repository_owner }}/rss-server:latest-${{ matrix.arch.suffix }})
           sleep 5
-          echo "📜 Container logs:"
           docker logs $CONTAINER_ID
-          echo "🛑 Stopping container"
           docker rm -f $CONTAINER_ID
 
-      - name: Push individual architecture images
+      - name: Push architecture image
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
+          docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-${{ matrix.arch.suffix }}
 
   manifest:
-    needs: [build-amd64, build-arm64]
+    needs: build-images
     runs-on: ubuntu-latest
+
     steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v2
+      - uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Merge into multi-arch manifest
+      - name: Create multi-arch manifest
         run: |
           docker buildx imagetools create \
             --tag ghcr.io/${{ github.repository_owner }}/rss-server:latest \
             ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64 \
-            ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64        
+            ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
