@@ -163,6 +163,10 @@ jobs:
 
           ls -lah /home/runner/work/rss_server/rss_server/packages/x86_64/APKINDEX.tar.gz || echo "❌ Not found" 
 
+      - name: Rebuild and sign APKINDEX
+        run: |
+          melange index --signing-key melange/melange.rsa ./packages/x86_64          
+
       - name: Show contents of APKINDEX.tar.gz
         run: |
           echo "📦 Listing packages in APKINDEX:"
