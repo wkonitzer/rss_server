@@ -83,19 +83,10 @@ jobs:
         run: |
           melange keygen melange/melange.rsa
 
-      - name: Prepare build files
-        run: |
-          rm -rf build && mkdir build
-          for pkg in melange/*.yaml; do
-            [ "$(basename "$pkg")" = "defaults.yaml" ] && continue
-            yq eval-all '. as $defaults ireduce ({}; . *+ $defaults )' \
-              melange/defaults.yaml "$pkg" > build/"$(basename "$pkg")"
-          done
-
       - name: Build packages
         run: |
           mkdir -p packages/${{ matrix.arch.arch }}
-          find build -name '*.yaml' | parallel -j 3 '
+          find melange -name '*.yaml' | parallel -j 3 '
             melange build {} --source-dir . \
               --arch ${{ matrix.arch.arch }} \
               --out-dir packages \
