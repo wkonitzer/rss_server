@@ -40,7 +40,7 @@ pipeline:
   - uses: git-checkout
     with:
       repository: https://github.com/lkiesow/python-feedgen
-      tag: ${{package.version}}
+      tag: v${{package.version}}
       expected-commit: 97260abb1793eb164c458c10b493690beb413f6d     
 
 subpackages:
