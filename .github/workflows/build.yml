@@ -115,38 +115,16 @@ jobs:
         run: |
           rm -rf build && mkdir build
 
-          # Set which Python version to build (default to 3.13 if not set)
-          PYTHON_VERSION="${PYTHON_VERSION:-3.13}"
-          echo "📦 Will keep only py${PYTHON_VERSION//.}-<package> subpackages"
-
           for pkg in melange/*.yaml; do
             [ "$(basename "$pkg")" = "defaults.yaml" ] && continue
 
-            # Merge defaults.yaml + package.yaml
             yq eval-all '. as $defaults ireduce ({}; . *+ $defaults )' \
               melange/defaults.yaml "$pkg" \
               > build/"$(basename "$pkg")"
-
-            # Extract pypi-package
-            PYPI_PACKAGE=$(yq eval '.vars.pypi-package' "build/$(basename "$pkg")" | tr -d '"')
-
-            # Export the package name
-            export PYPKG="$PYPI_PACKAGE"
-
-            # Filter using strenv() inside the yq expression
-            yq eval '
-              .subpackages |= (
-                map(select(.name == "py'"${PYTHON_VERSION//.}"'-" + strenv(PYPKG))) +
-                map(select(.name == "py3-supported-" + strenv(PYPKG)))
-              )
-            ' "build/$(basename "$pkg")" > "build/$(basename "$pkg").tmp"
-
-            mv "build/$(basename "$pkg").tmp" "build/$(basename "$pkg")"
           done      
 
           ls -lh build
-          cat build/*
-   
+          cat build/*    
 
       - name: Build minimal container for builds
         run: |
