@@ -29,7 +29,8 @@ pipeline:
   - name: Build apscheduler wheel
     runs: |
       pip wheel apscheduler --wheel-dir /package
-      pip install --no-index --find-links=/package apscheduler --prefix "${{targets.destdir}}"
+      SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])")
+      pip install --no-index --find-links=/package apscheduler --target="${{targets.destdir}}${SITE_PACKAGES}"
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do
