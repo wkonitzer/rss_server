@@ -1,21 +1,13 @@
-package:
+package:More actions
   name: py3-apscheduler
-  version: "3.11.0"
+  version: 3.11.0
   epoch: 0
-  description: Python job scheduling library
+  description: "Python package apscheduler"
   target-architecture:
     - x86_64
     - aarch64
   copyright:
     - license: MIT
-  dependencies:
-    runtime:
-      - python3
-      - py3-anyio
-      - py3-attrs
-      - py3-tenacity
-      - py3-tzlocal
-      - py3-typing-extensions
 
 environment:
   contents:
@@ -34,29 +26,26 @@ environment:
       - build-base
 
 pipeline:
-  - uses: git-checkout
-    with:
-      repository: https://github.com/agronholm/apscheduler
-      tag: ${{package.version}}
-      expected-commit: 6c72a51416893eb0eebbe63d0f2a0151952cab59
-
-  - uses: py/pip-build-install
-    with:
-      python: python3
+  - name: Build apscheduler wheel
+    runs: |
+      pip wheel apscheduler --wheel-dir /package
+      pip install --no-index --find-links=/package apscheduler --prefix "${{targets.destdir}}"
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done
 
   - name: Cleanup unnecessary Python artifacts
     runs: |
-      find "${{targets.destdir}}" -name '*.pyc' -delete     
+      find "${{targets.destdir}}" -name '*.pyc' -delete
+      find "${{targets.destdir}}" -name '*.pyo' -delete
+      find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
 
-test:
-  pipeline:
-    - uses: python/import
-      with:
-        python: python3
-        imports: |
-          import apscheduler
-
-update:
-  enabled: true
-  github:
-    identifier: agronholm/apscheduler
+  - name: Install wheel into Python environment
+    runs: |
+      pip install --no-index --find-links=/package apscheduler --prefix "${{targets.destdir}}"
