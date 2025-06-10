@@ -45,7 +45,3 @@ pipeline:
       find "${{targets.destdir}}" -name '*.pyc' -delete
       find "${{targets.destdir}}" -name '*.pyo' -delete
       find "${{targets.destdir}}" -name '__pycache__' -type d -exec rm -rf {} +
-
-  - name: Install wheel into Python environment
-    runs: |
-      pip install --no-index --find-links=/package apscheduler --prefix "${{targets.destdir}}"
