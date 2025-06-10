@@ -1,4 +1,4 @@
-package:More actions
+package:
   name: py3-apscheduler
   version: 3.11.0
   epoch: 0
