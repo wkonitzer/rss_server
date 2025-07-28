@@ -122,9 +122,34 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push ghcr.io/${{ github.repository_owner }}/rss-server:latest-${{ matrix.arch.suffix }}
 
+      - name: Get image digest
+        id: digest
+        run: |
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/${{ github.repository_owner }}/rss-server:latest-${{ matrix.arch.suffix }} | cut -d@ -f2)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.9.2
+
+      - name: Attest the build
+        uses: actions/attest-build-provenance@v2.4.0
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/rss-server
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+
+      - name: Sign the image
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes ghcr.io/${{ github.repository_owner }}/rss-server@${{ steps.digest.outputs.digest }}          
+
   manifest:
     needs: build-images
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      packages: write
 
     steps:
       - uses: docker/login-action@v2
@@ -139,3 +164,30 @@ jobs:
             --tag ghcr.io/${{ github.repository_owner }}/rss-server:latest \
             ghcr.io/${{ github.repository_owner }}/rss-server:latest-amd64 \
             ghcr.io/${{ github.repository_owner }}/rss-server:latest-arm64
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.9.2
+
+      - name: Install skopeo
+        run: |
+          sudo apt-get update && sudo apt-get install -y skopeo jq
+
+      - name: Get manifest digest
+        id: digest
+        run: |
+          DIGEST=$(skopeo inspect docker://ghcr.io/${{ github.repository_owner }}/rss-server:latest | jq -r .Digest)
+          echo "digest=$DIGEST"
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Sign multi-arch image
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes ghcr.io/${{ github.repository_owner }}/rss-server@${{ steps.digest.outputs.digest }}
+
+      - name: Attest multi-arch manifest
+        uses: actions/attest-build-provenance@v2.4.0
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/rss-server
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true      
