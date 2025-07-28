@@ -67,13 +67,13 @@ jobs:
 
           install_latest_release apko chainguard-dev/apko
 
-    - name: Checkout melange latest version
-      run: |
-        cd melange-src
-        LATEST=$(curl -s https://api.github.com/repos/chainguard-dev/melange/releases/latest | jq -r .tag_name)
-        echo "Checking out latest Melange release: $LATEST"
-        git fetch --tags
-        git checkout "$LATEST"        
+      - name: Checkout melange latest version
+        run: |
+          cd melange-src
+          LATEST=$(curl -s https://api.github.com/repos/chainguard-dev/melange/releases/latest | jq -r .tag_name)
+          echo "Checking out latest Melange release: $LATEST"
+          git fetch --tags
+          git checkout "$LATEST"        
 
       - name: Merge pipelines & build melange
         run: |
