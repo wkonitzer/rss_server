@@ -22,12 +22,10 @@ environment:
       - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
       - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
-      - busybox
       - python3
       - py3-pip
       - py3-setuptools
       - py3-wheel
-      - build-base
 
 pipeline:
   - name: Enforce usrmerge layout (early)
