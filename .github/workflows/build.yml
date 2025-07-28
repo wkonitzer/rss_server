@@ -94,14 +94,22 @@ jobs:
           for f in $(find melange -name '*.yaml'); do
             guest_dir=$(mktemp -d)
             echo "📦 Building $f with isolated guest-dir: $guest_dir"
-            rm -rf "$guest_dir"/*
+
+            # 🛠️ Create overlay hack to predefine /lib -> /usr/lib in the guest FS
+            export MELANGE_APKO_OVERLAY_HACK=$(mktemp -d)
+            mkdir -p "$MELANGE_APKO_OVERLAY_HACK/usr"
+            ln -sf usr/lib "$MELANGE_APKO_OVERLAY_HACK/lib"
+
+            # 🧱 Run the build with the overlay directory passed as extra repo root
             melange build "$f" \
               --source-dir . \
               --arch ${{ matrix.arch.arch }} \
               --out-dir packages \
               --signing-key melange/melange.rsa \
               --runner docker \
-              --guest-dir "$guest_dir"
+              --guest-dir "$guest_dir" \
+              --extra-repository "$MELANGE_APKO_OVERLAY_HACK"
+
             rm -rf "$guest_dir"
           done
 
