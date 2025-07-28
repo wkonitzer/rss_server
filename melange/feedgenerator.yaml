@@ -30,14 +30,6 @@ environment:
       - build-base
 
 pipeline:
-  - name: Enforce usrmerge layout (early)
-    runs: |
-      mkdir -p "${{targets.destdir}}/usr"
-      if [ -d "${{targets.destdir}}/lib" ] && [ ! -L "${{targets.destdir}}/lib" ]; then
-        rm -rf "${{targets.destdir}}/lib"
-      fi
-      ln -sf usr/lib "${{targets.destdir}}/lib"  
-      
   - uses: git-checkout
     with:
       repository: https://github.com/getpelican/feedgenerator
@@ -47,6 +39,16 @@ pipeline:
   - uses: py/pip-build-install
     with:
       python: python3
+
+  - name: Enforce usrmerge layout
+    runs: |
+      for dir in bin sbin usr/sbin; do
+        if [ -d "${{targets.destdir}}/$dir" ]; then
+          mkdir -p "${{targets.destdir}}/usr/bin"
+          mv "${{targets.destdir}}/$dir/"* "${{targets.destdir}}/usr/bin/" || true
+          rm -rf "${{targets.destdir}}/$dir"
+        fi
+      done      
 
 test:
   pipeline:

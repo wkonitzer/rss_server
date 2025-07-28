@@ -26,19 +26,12 @@ environment:
       - build-base
 
 pipeline:
-- name: Enforce usrmerge layout (early)
-  runs: |
-    mkdir -p "${{targets.destdir}}/usr"
-    if [ -d "${{targets.destdir}}/lib" ] && [ ! -L "${{targets.destdir}}/lib" ]; then
-      rm -rf "${{targets.destdir}}/lib"
-    fi
-    ln -sf usr/lib "${{targets.destdir}}/lib"
-
   - name: Build apscheduler wheel
     runs: |
       pip wheel apscheduler --wheel-dir /package
       SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])")
       pip install --no-deps --no-index --find-links=/package apscheduler --target="${{targets.destdir}}${SITE_PACKAGES}"
+
   - name: Enforce usrmerge layout
     runs: |
       for dir in bin sbin usr/sbin; do
