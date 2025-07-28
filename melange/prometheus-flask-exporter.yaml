@@ -33,14 +33,6 @@ environment:
       - build-base
 
 pipeline:
-  - name: Enforce usrmerge layout (early)
-    runs: |
-      mkdir -p "${{targets.destdir}}/usr"
-      if [ -d "${{targets.destdir}}/lib" ] && [ ! -L "${{targets.destdir}}/lib" ]; then
-        rm -rf "${{targets.destdir}}/lib"
-      fi
-      ln -sf usr/lib "${{targets.destdir}}/lib"
-  
   - uses: git-checkout
     with:
       repository: https://github.com/rycus86/prometheus_flask_exporter
@@ -50,6 +42,15 @@ pipeline:
   - uses: py/pip-build-install
     with:
       python: python3
+
+  - name: Fix usrmerge layout
+    runs: |
+      if [ -d "${{targets.destdir}}/lib" ] && [ ! -L "${{targets.destdir}}/lib" ]; then
+        echo "🔁 Moving /lib contents to /usr/lib to satisfy usrmerge..."
+        mkdir -p "${{targets.destdir}}/usr/lib"
+        mv "${{targets.destdir}}/lib/"* "${{targets.destdir}}/usr/lib/" || true
+        rm -rf "${{targets.destdir}}/lib"
+      fi      
 
 test:
   pipeline:
