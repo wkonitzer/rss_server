@@ -23,6 +23,7 @@ environment:
       - https://packages.wolfi.dev/bootstrap/stage3/wolfi-signing.rsa.pub
       - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
+      - usrmerge
       - busybox
       - python3
       - py3-pip
