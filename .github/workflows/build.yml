@@ -91,13 +91,17 @@ jobs:
       - name: Build packages
         run: |
           mkdir -p packages/${{ matrix.arch.arch }}
-          find melange -name '*.yaml' | parallel -j 1 '
-            melange build {} --source-dir . \
+          for f in $(find melange -name '*.yaml'); do
+            tmpdir=$(mktemp -d)
+            echo "📦 Building $f with isolated tmpdir: $tmpdir"
+            melange build "$f" \
+              --source-dir . \
               --arch ${{ matrix.arch.arch }} \
               --out-dir packages \
               --signing-key melange/melange.rsa \
-              --runner docker || true
-          '
+              --runner docker || exit 1
+            rm -rf "$tmpdir"
+          done
 
       - name: Build container image
         run: |
