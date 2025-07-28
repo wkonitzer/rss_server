@@ -94,6 +94,7 @@ jobs:
           for f in $(find melange -name '*.yaml'); do
             guest_dir=$(mktemp -d)
             echo "📦 Building $f with isolated guest-dir: $guest_dir"
+            rm -rf "$guest_dir"/*
             melange build "$f" \
               --source-dir . \
               --arch ${{ matrix.arch.arch }} \
