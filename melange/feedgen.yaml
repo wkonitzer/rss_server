@@ -49,6 +49,15 @@ pipeline:
     runs: |
       python3 setup.py install --prefix=/usr --root="${{targets.destdir}}"
 
+  - name: Fix usrmerge layout
+    runs: |
+      if [ -d "${{targets.destdir}}/lib" ] && [ ! -L "${{targets.destdir}}/lib" ]; then
+        echo "🔁 Moving /lib contents to /usr/lib to satisfy usrmerge..."
+        mkdir -p "${{targets.destdir}}/usr/lib"
+        mv "${{targets.destdir}}/lib/"* "${{targets.destdir}}/usr/lib/" || true
+        rm -rf "${{targets.destdir}}/lib"
+      fi      
+
 test:
   pipeline:
     - uses: python/import
