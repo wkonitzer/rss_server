@@ -29,6 +29,9 @@ pipeline:
   - name: Enforce usrmerge layout (early)
     runs: |
       mkdir -p "${{targets.destdir}}/usr"
+      if [ -d "${{targets.destdir}}/lib" ] && [ ! -L "${{targets.destdir}}/lib" ]; then
+        rm -rf "${{targets.destdir}}/lib"
+      fi
       ln -sf usr/lib "${{targets.destdir}}/lib"
   
   - name: Prepare build context
