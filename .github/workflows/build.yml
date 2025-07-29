@@ -158,6 +158,7 @@ jobs:
     permissions:
       id-token: write
       packages: write
+      attestations: write
 
     steps:
       - uses: docker/login-action@v2
