@@ -223,8 +223,15 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
           echo "$HOME/.koyeb/bin" >> $GITHUB_PATH
 
-      - name: Authenticate
-        run: koyeb login --token ${{ secrets.KOYEB_API_TOKEN }}
+      - name: Authenticate with Koyeb
+        run: |
+          mkdir -p ~/.koyeb
+          cat <<EOF > ~/.koyeb.yaml
+debug: false
+organization: ""
+token: ${{ secrets.KOYEB_API_TOKEN }}
+url: https://app.koyeb.com
+EOF
 
       - name: Redeploy service
         run: koyeb service redeploy brief-valencia/rss-server
