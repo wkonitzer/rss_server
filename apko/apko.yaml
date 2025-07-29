@@ -47,6 +47,9 @@ contents:
     - py3-urllib3
     - py3-werkzeug
     - python3
+layering:
+  strategy: origin
+  budget: 10
 
 work-dir: /
 

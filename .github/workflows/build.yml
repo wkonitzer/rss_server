@@ -199,4 +199,12 @@ jobs:
         with:
           subject-name: ghcr.io/${{ github.repository_owner }}/rss-server
           subject-digest: ${{ steps.digest.outputs.digest }}
-          push-to-registry: true      
+          push-to-registry: true
+
+      - name: Verify signed image
+        run: |
+          cosign verify \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/.github/workflows/.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            ghcr.io/${{ github.repository_owner }}/rss-server:latest            
+            
