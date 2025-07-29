@@ -227,11 +227,11 @@ jobs:
         run: |
           mkdir -p ~/.koyeb
           cat <<EOF > ~/.koyeb.yaml
-debug: false
-organization: ""
-token: ${{ secrets.KOYEB_API_TOKEN }}
-url: https://app.koyeb.com
-EOF
+          debug: false
+          organization: ""
+          token: ${{ secrets.KOYEB_API_TOKEN }}
+          url: https://app.koyeb.com
+          EOF
 
       - name: Redeploy service
         run: koyeb service redeploy brief-valencia/rss-server
