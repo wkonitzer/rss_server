@@ -224,7 +224,7 @@ jobs:
           echo "$HOME/.koyeb/bin" >> $GITHUB_PATH
 
       - name: Authenticate
-        run: koyeb auth login --token ${{ secrets.KOYEB_API_TOKEN }}
+        run: koyeb login --token ${{ secrets.KOYEB_API_TOKEN }}
 
       - name: Redeploy service
         run: koyeb service redeploy brief-valencia/rss-server
