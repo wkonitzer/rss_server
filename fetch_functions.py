@@ -12,6 +12,8 @@ import yaml
 from bs4 import BeautifulSoup
 from packaging.version import Version
 
+SEMVER_BRANCH = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
+
 def construct_url(repository, channel):
     """
     Constructs and returns the URL to be used for fetching release information
@@ -320,91 +322,94 @@ def fetch_mke(product_config):
         config.logger.error("Value error occurred: %s", value_error)
         return []
 
+def _filter_branch(tags, branch):
+    """Return only tags that match the given branch prefix (e.g. '3.1' or '3.1.x')."""
+    if not branch or not SEMVER_BRANCH.match(branch):
+        return list(tags or [])
+    pref = f"{branch}."
+    return [t for t in (tags or []) if t == branch or t.startswith(pref)]
+
+def _semver_key(v):
+    """Convert a version string into a sortable (major, minor, patch) tuple."""
+    try:
+        parts = v.split(".")
+        parts += ["0"] * (3 - len(parts))
+        return tuple(int(p) for p in parts[:3])
+    except Exception:
+        return (-1, -1, -1)
+
+def _build_chartmuseum_index_like(product, versions):
+    """Build a minimal ChartMuseum-like index dict for the given chart versions."""
+
+    entries = [{"apiVersion": "v2", "name": product, "version": v, "urls": []}
+               for v in versions]
+    return {"apiVersion": "v1", "entries": {product: entries}}
+
 def fetch_msr(product_config):
     """
-    This code block fetches release information for a specified MSR product
-    from either the Mirantis registry or a Helm chart repository, based on the
-    provided configuration. It constructs the appropriate URL, sends an HTTP
-    GET request, and processes the response to extract release details. 
-
-    Configuration settings are imported, and the logger from the config module
-    is utilized to log process details and any potential errors. The URL is
-    constructed dynamically based on the product configuration and the major
-    version of the specified branch.
-
-    The code sends an HTTP GET request to the constructed URL and logs the HTTP
-    response status and text. If the branch_major is 3 or above, the response
-    text is interpreted as YAML; otherwise, it's interpreted as JSON. The
-    parsed data, along with the branch information, is then passed to the
-    'parse_msr_releases' function to extract the release details.
-
-    In case of errors during the HTTP request, such as connectivity problems,
-    timeout, or unsuccessful HTTP status, appropriate exceptions are caught,
-    and error messages are logged. If an error occurs during the response text
-    parsing as YAML or JSON, a ValueError is caught and logged.
-
-    Parameters:
-        product_config (dict): Contains product configuration details like
-            'repository', 'registry', and 'branch'.
-            Example:
-                {
-                    'repository': 'msr/msr',
-                    'registry': 'https://registry.mirantis.com',
-                    'branch': '3.1'
-                }
-
-    Returns:
-        list: Returns a list of dictionaries, each containing the 'name' and
-        'date' of a release, returned by the 'parse_msr_releases' function.
-        Returns an empty list if any error occurs during the process.
-
-    Raises:
-        requests.RequestException: For issues related to the HTTP request, such 
-        asconnectivity problems or timeout.
-        requests.HTTPError: If the HTTP request receives an unsuccessful status
-        code.
-        yaml.YAMLError: If there is an error in parsing the YAML response from
-        the Helm chart repository.
-        ValueError: For errors in interpreting the response text as YAML or
-        JSON, or in parsing the date string in 'parse_msr_releases'.
+    Updated for Harbor OCI:
+      - MSR 4.x → registry.mirantis.com/harbor/helm/msr
+      - MSR 3.x → registry.mirantis.com/msr/helm/msr
+      - < 3     → legacy JSON endpoint unchanged
+    Returns a ChartMuseum-like index to keep parse_msr_releases unchanged.
     """
     config = importlib.import_module('config')
-    config.logger.debug('fetch_msr called with configuration: %s',
-                        product_config)
+    logger = config.logger
+
+    logger.debug('fetch_msr called with configuration: %s', product_config)
+
     repository = product_config.get('repository')
-    registry = product_config.get('registry')
-    branch = product_config.get('branch')
+    registry   = product_config.get('registry')
+    branch     = product_config.get('branch')
+    product    = product_config.get('product', 'msr')
     branch_major = int(branch.split('.')[0]) if branch else None
 
-    base_url = (
-        f"{registry}/charts/{repository}"
-        if branch_major and branch_major >= 3
-        else f"{registry}/v2/repositories/{repository}"
-    )
-    url = (
-        f"{base_url}/index.yaml"
-        if branch_major and branch_major >= 3
-        else f"{base_url}/tags"
-    )
-    config.logger.debug('Constructed URL: %s', url)
-
     try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        config.logger.debug('HTTP response status: %s', response.status_code)
-        config.logger.debug('HTTP response text: %s', response.text)
+        if branch_major and branch_major >= 3 and "registry.mirantis.com" in registry:
+            # Choose correct OCI artifact path per major line
+            if branch_major >= 4:
+                artifact_path = "harbor/helm/msr"
+            else:  # 3.x
+                artifact_path = "msr/helm/msr"
 
-        data = (yaml.safe_load(response.text)
-                if branch_major and branch_major >= 3
-                else response.json())
-        return parse_msr_releases(data, branch)
-    except (requests.RequestException,
-            requests.HTTPError,
-            yaml.YAMLError) as request_error:
-        config.logger.error("Error fetching %s: %s", url, request_error)
+            url = f"{registry.rstrip('/')}/v2/{artifact_path}/tags/list"
+            logger.debug('Constructed URL (OCI tags): %s', url)
+
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            logger.debug('HTTP response status: %s', resp.status_code)
+            logger.debug('HTTP response text: %s', resp.text)
+
+            payload = resp.json()  # {"name":"...","tags":[...]}
+            tags = _filter_branch(payload.get("tags") or [], branch)
+
+            # If you truly only want the latest, keep just the top version:
+            tags = sorted(tags, key=_semver_key, reverse=True)
+            if tags:
+                tags = [tags[0]]   # <-- comment this line if you prefer all branch tags
+
+            synthetic_index = _build_chartmuseum_index_like(product, tags)
+            return parse_msr_releases(synthetic_index, branch)
+
+        else:
+            # Legacy (<3) unchanged behavior
+            base_url = f"{registry.rstrip('/')}/v2/repositories/{(repository or '').strip('/')}"
+            url = f"{base_url}/tags"
+            logger.debug('Constructed URL (legacy tags): %s', url)
+
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            logger.debug('HTTP response status: %s', resp.status_code)
+            logger.debug('HTTP response text: %s', resp.text)
+
+            data = resp.json()
+            return parse_msr_releases(data, branch)
+
+    except (requests.RequestException, requests.HTTPError, yaml.YAMLError) as request_error:
+        logger.error("Error fetching %s: %s", url, request_error)
         return []
     except ValueError as value_error:
-        config.logger.error("Value error occurred: %s", value_error)
+        logger.error("Value error occurred: %s", value_error)
         return []
 
 def parse_msr_releases(data, branch):
