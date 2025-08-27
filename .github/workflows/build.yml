@@ -234,7 +234,7 @@ jobs:
           EOF
 
       - name: Redeploy service
-        run: koyeb service redeploy brief-valencia/rss-server
+        run: koyeb service redeploy raw-ocelot/rss-server
 
       - name: Check /health endpoint
         run: |
