@@ -14,6 +14,7 @@ from packaging.version import Version
 from urllib.parse import parse_qsl
 
 SEMVER_BRANCH = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
+_BR_RE = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
 
 def construct_url(repository, channel):
     """
@@ -386,138 +387,252 @@ def _get_registry_token(registry, artifact_path, logger, username=None, password
     token = (tr.json() or {}).get("token") or (tr.json() or {}).get("access_token")
     return token
 
+import requests
+
+def _fetch_manifest_created(session: requests.Session,
+                            registry: str,
+                            artifact_path: str,
+                            tag: str,
+                            headers: dict,
+                            timeout: int = 10) -> str | None:
+    """Fetch a tag's manifest and return org.opencontainers.image.created (ISO-8601) or None."""
+    url = f"{registry.rstrip('/')}/v2/{artifact_path}/manifests/{tag}"
+    # Accept both OCI and Docker manifest types
+    h = {"Accept": (
+            "application/vnd.oci.image.manifest.v1+json, "
+            "application/vnd.oci.artifact.manifest.v1+json, "
+            "application/vnd.docker.distribution.manifest.v2+json"
+        )}
+    if headers:
+        h.update(headers)
+    try:
+        r = session.get(url, headers=h, timeout=timeout)
+        r.raise_for_status()
+        m = r.json() or {}
+        ann = m.get("annotations") or {}
+        created = ann.get("org.opencontainers.image.created")
+        if not created:
+            # Some producers stash annotations under config
+            cfg = m.get("config") or {}
+            cfg_ann = cfg.get("annotations") or {}
+            created = cfg_ann.get("org.opencontainers.image.created")
+        # Normalize to Z-suffixed ISO 8601 if needed
+        if created and not created.endswith("Z"):
+            created = created + "Z"
+        return created
+    except Exception:
+        return None
+
+def _build_chartmuseum_index_like(product: str,
+                                  versions: list[str],
+                                  created_map: dict[str, str] | None = None) -> dict:
+    """Build a minimal ChartMuseum-like index dict for given versions; adds 'created' when available."""
+    entries = []
+    for v in versions:
+        e = {"apiVersion": "v2", "name": product, "version": v, "urls": []}
+        if created_map and created_map.get(v):
+            e["created"] = created_map[v]
+        entries.append(e)
+    return {"apiVersion": "v1", "entries": {product: entries}}
+
+
 def fetch_msr(product_config):
-    """Fetch MSR release info (OCI or legacy), handling registry Bearer auth, and return parsed releases."""
+    """
+    Fetch MSR releases:
+      - MSR 3.x (OCI): registry.mirantis.com/msr/helm/msr
+      - MSR 4.x (OCI): registry.mirantis.com/harbor/helm/msr
+      - < 3.x legacy:  <registry>/v2/repositories/<repository>/tags (JSON)
+    Performs Bearer auth, fetches per-tag manifest 'created', and returns data
+    in a ChartMuseum-like shape so existing parsers work unchanged.
+    """
     config = importlib.import_module('config')
     logger = config.logger
 
     logger.debug('fetch_msr called with configuration: %s', product_config)
 
-    repository = product_config.get('repository')              # 'harbor/helm' or 'msr/msr'
-    registry   = product_config.get('registry')                # 'https://registry.mirantis.com'
-    branch     = product_config.get('branch')                  # '4.0' or '3.1'
-    product    = product_config.get('product', 'msr')          # 'msr'
-    username   = product_config.get('username')                # optional
-    password   = product_config.get('password')                # optional
+    repository = product_config.get('repository')            # e.g. 'harbor/helm' or 'msr/msr'
+    registry   = product_config.get('registry')              # e.g. 'https://registry.mirantis.com'
+    branch     = product_config.get('branch')                # e.g. '4.0', '3.1'
+    product    = product_config.get('product', 'msr')        # 'msr'
+    username   = product_config.get('username')              # optional
+    password   = product_config.get('password')              # optional
     branch_major = int(branch.split('.')[0]) if branch else None
 
     try:
+        # OCI-backed charts (Mirantis Harbor) for >= 3.x
         if branch_major and branch_major >= 3 and "registry.mirantis.com" in registry:
-            # Choose correct OCI artifact path per major line:
-            artifact_path = "harbor/helm/msr" if branch_major >= 4 else "msr/helm/msr"
-            url = f"{registry.rstrip('/')}/v2/{artifact_path}/tags/list"
-            logger.debug('Constructed URL (OCI tags): %s', url)
+            # Preferred path per major, plus a fallback to the other known path.
+            preferred = "harbor/helm/msr" if branch_major >= 4 else "msr/helm/msr"
+            alternate = "msr/helm/msr" if branch_major >= 4 else "harbor/helm/msr"
+
+            # If caller gave an explicit parent repo, consider that too.
+            explicit = None
+            if repository and repository.strip("/"):
+                # Only use when it would form <repo>/<product> (e.g., 'harbor/helm/msr')
+                explicit = f"{repository.strip('/')}/{product}"
+
+            candidate_paths = [preferred, alternate]
+            if explicit and explicit not in candidate_paths:
+                candidate_paths.insert(0, explicit)
 
             s = requests.Session()
-            # Try with no auth first
-            resp = s.get(url, timeout=10)
+            headers: Dict[str, str] = {}
+            all_tags: List[str] = []
+            chosen_path: Optional[str] = None
 
-            if resp.status_code == 401:
-                # Perform Bearer token flow
-                token = _get_registry_token(registry, artifact_path, logger, username, password, session=s)
-                if token:
-                    resp = s.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=10)
+            # Try each candidate path until one returns tags
+            for artifact_path in candidate_paths:
+                url = f"{registry.rstrip('/')}/v2/{artifact_path}/tags/list"
+                logger.debug('Trying OCI tags URL: %s', url)
 
-            resp.raise_for_status()
-            logger.debug('HTTP response status: %s', resp.status_code)
-            logger.debug('HTTP response text: %s', resp.text)
+                resp = s.get(url, timeout=10)
+                if resp.status_code == 401:
+                    token = _get_registry_token(s, registry, artifact_path, logger, username, password)
+                    if token:
+                        headers = {"Authorization": f"Bearer {token}"}
+                        resp = s.get(url, headers=headers, timeout=10)
 
-            payload = resp.json()  # {"name":"...","tags":[...]}
-            tags = _filter_branch(payload.get("tags") or [], branch)
-            tags = sorted(tags, key=_semver_key, reverse=True)
+                if 200 <= resp.status_code < 300:
+                    payload = resp.json() or {}
+                    tags = payload.get("tags") or []
+                    logger.debug("Found %d tags on %s", len(tags), artifact_path)
+                    if tags:
+                        all_tags = tags
+                        chosen_path = artifact_path
+                        break
+                else:
+                    logger.debug("Path %s returned %s; body: %s", artifact_path, resp.status_code, resp.text[:300])
 
-            # Keep only the latest within the branch
-            if tags:
-                tags = [tags[0]]
+            if not all_tags:
+                logger.warning("No tags found on any known artifact path for branch %s", branch)
+                return []
 
-            synthetic_index = _build_chartmuseum_index_like(product, tags)
+            # Filter to the requested branch and sort
+            branch_tags = _filter_branch(all_tags, branch)
+            branch_tags = sorted(branch_tags, key=_semver_key, reverse=True)
+            logger.debug("Branch-filtered tags: %s", branch_tags[:10])
+
+            # Fetch 'created' for each tag (reuse the same session + token)
+            created_map: Dict[str, str] = {}
+            for t in branch_tags:
+                created_map[t] = _fetch_manifest_created(
+                    session=s,
+                    registry=registry,
+                    artifact_path=chosen_path,
+                    tag=t,
+                    headers=headers
+                )
+
+            synthetic_index = _build_chartmuseum_index_like(product, branch_tags, created_map)
             return parse_msr_releases(synthetic_index, branch)
 
-        else:
-            # Legacy (<3) unchanged behavior — public JSON
-            base_url = f"{registry.rstrip('/')}/v2/repositories/{(repository or '').strip('/')}"
-            url = f"{base_url}/tags"
-            logger.debug('Constructed URL (legacy tags): %s', url)
+        # Legacy (< 3.x) JSON endpoint
+        base_url = f"{registry.rstrip('/')}/v2/repositories/{(repository or '').strip('/')}"
+        url = f"{base_url}/tags"
+        logger.debug('Constructed URL (legacy tags): %s', url)
 
-            resp = requests.get(url, timeout=10)
-            resp.raise_for_status()
-            logger.debug('HTTP response status: %s', resp.status_code)
-            logger.debug('HTTP response text: %s', resp.text)
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        logger.debug('HTTP response status: %s', resp.status_code)
+        logger.debug('HTTP response text: %s', resp.text)
 
-            data = resp.json()
-            return parse_msr_releases(data, branch)
+        data = resp.json()
+        return parse_msr_releases(data, branch)
 
     except (requests.RequestException, requests.HTTPError, yaml.YAMLError) as request_error:
-        logger.error("Error fetching %s: %s", url, request_error)
+        # 'url' may be the last attempted; safe fallback in log if unset
+        try:
+            logger.error("Error fetching %s: %s", url, request_error)
+        except Exception:
+            logger.error("Error fetching releases: %s", request_error)
         return []
     except ValueError as value_error:
         logger.error("Value error occurred: %s", value_error)
         return []
 
+def _parse_iso8601(dt: str):
+    """Parse ISO-8601 timestamps with/without fractional seconds; return datetime or None."""
+    if not dt:
+        return None
+    # Normalize trailing Z
+    s = dt.rstrip("Z")
+    for fmt in ("%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
+
+def _is_prerelease(v: str) -> bool:
+    """Return True if version has a hyphen suffix (e.g., '-rc', '-beta')."""
+    return "-" in v if v else False
+
+def _in_branch(v: str, branch: str) -> bool:
+    """Return True if version matches 'X.Y' branch (v == 'X.Y' or v startswith 'X.Y.')."""
+    if not branch or not v:
+        return True
+    b = branch.lstrip("v")
+    return v == b or v.startswith(b + ".")
 
 def parse_msr_releases(data, branch):
     """
-    Parses the release information from the provided data and returns a list
-    of dictionaries, each representing a release with its name and date.
-
-    This function iterates over the data, extracting the app version and 
-    creation date of each release, then filters the releases based on the 
-    provided branch and returns a list of the remaining releases.
-
-    Parameters:
-        data (dict): A dictionary containing the release data to be parsed.
-        branch (str): The branch of the product to filter the releases by. 
-                      Releases not belonging to this branch are discarded.
-
-    Returns:
-        list: A list of dictionaries, each containing the 'name' and 'date' 
-              of a release. For example:
-              [
-                  {'name': '3.4.5', 'date': datetime.datetime(2023, 10, 1,
-                                                              12, 0, 0)}
-              ]
-
-    Raises:
-        ValueError: If there is an error in parsing the date string.
-
-    Notes:
-        If the 'appVersion' contains a '-', it is discarded.
-        If the 'created' key is missing or empty, a warning is logged.
-        If a branch is specified, releases not belonging to this branch are
-        discarded.
+    Parse MSR release info from various backends (ChartMuseum index, OCI tags, Docker Hub).
+    Returns [{'name': <version>, 'date': <datetime|None>}, ...] filtered to the given branch.
+    Discards pre-releases (versions containing '-').
     """
     config = importlib.import_module('config')
+    logger = config.logger
     releases = []
-    # Normalize the branch input by stripping the "v" prefix if present
-    branch = branch.lstrip('v')
-    for key in ["harbor", "msr"]:
-        for entry in data.get('entries', {}).get(key, []):
-            app_version = entry.get('appVersion')
-            date_str = entry.get('created', '')
-            # Normalize app_version by stripping "v" if present
-            if app_version:
-                app_version = app_version.lstrip('v')
-            if app_version and '-' not in app_version:
-                if date_str:
-                    try:
-                        date_object = datetime.strptime(date_str,
-                                                        '%Y-%m-%dT%H:%M:%S.%fZ')
-                        releases.append({'name': app_version, 'date': date_object})
-                    except ValueError:
-                        config.logger.error("Error parsing date string: %s",
-                                            date_str)
-                else:
-                    config.logger.warning("No date found for version %s",
-                                          app_version)
 
-    if branch:
-        major, minor = map(int, branch.split('.'))
-        releases = [
-            release for release in releases
-            if release['name'].split('.')[0] == str(major)
-            and release['name'].split('.')[1] == str(minor)
-        ]
+    # Normalize branch ('v4.13' -> '4.13')
+    branch = (branch or "").lstrip("v")
+
+    # Case A: ChartMuseum-like shape (real or synthesized)
+    entries = data.get("entries") if isinstance(data, dict) else None
+    if isinstance(entries, dict):
+        # Iterate all charts; keep entries whose appVersion/version match branch and are GA
+        for chart_name, chart_entries in entries.items():
+            for e in chart_entries or []:
+                # Prefer appVersion, else fallback to version
+                ver = (e.get("appVersion") or e.get("version") or "").lstrip("v")
+                if not ver or _is_prerelease(ver) or not _in_branch(ver, branch):
+                    continue
+                created = e.get("created") or ""
+                dt = _parse_iso8601(created)
+                if not dt and created:
+                    logger.warning("Unparsable created timestamp for %s: %s", ver, created)
+                if not created:
+                    logger.warning("No date found for version %s", ver)
+                releases.append({"name": ver, "date": dt})
+        return releases
+
+    # Case B: Raw OCI tags list
+    if isinstance(data, dict) and isinstance(data.get("tags"), list):
+        for tag in data["tags"]:
+            ver = str(tag).lstrip("v")
+            if not ver or _is_prerelease(ver) or not _in_branch(ver, branch):
+                continue
+            # Tags endpoint has no date; keep it with date=None
+            logger.warning("No date available from tags endpoint for version %s", ver)
+            releases.append({"name": ver, "date": None})
+        return releases
+
+    # Case C: Docker Hub listing (results[] with last_updated)
+    if isinstance(data, dict) and isinstance(data.get("results"), list):
+        for r in data["results"]:
+            ver = str(r.get("name", "")).lstrip("v")
+            if not ver or _is_prerelease(ver) or not _in_branch(ver, branch):
+                continue
+            dt = _parse_iso8601((r.get("last_updated") or "").replace("Z", ""))
+            if not dt and r.get("last_updated"):
+                logger.warning("Unparsable last_updated for %s: %s", ver, r.get("last_updated"))
+            releases.append({"name": ver, "date": dt})
+        return releases
+
+    # Fallback: unknown shape — try best-effort keys
+    logger.warning("Unknown data shape in parse_msr_releases; data keys: %s", list(data.keys()) if isinstance(data, dict) else type(data))
     return releases
+
 
 def date_from_human_string(date_str):
     """
