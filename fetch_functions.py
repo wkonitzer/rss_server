@@ -11,6 +11,7 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 from packaging.version import Version
+from urllib.parse import parse_qsl
 
 SEMVER_BRANCH = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
 
@@ -345,54 +346,95 @@ def _build_chartmuseum_index_like(product, versions):
                for v in versions]
     return {"apiVersion": "v1", "entries": {product: entries}}
 
+def _parse_bearer_challenge(header_val):
+    """Parse a WWW-Authenticate Bearer challenge into (realm, service, scope_dict)."""
+    # Example: Bearer realm="https://auth.example/token",service="registry.example",scope="repository:harbor/helm/msr:pull"
+    parts = header_val[len("Bearer "):].split(",")
+    kv = {}
+    for p in parts:
+        if "=" in p:
+            k, v = p.split("=", 1)
+            kv[k.strip()] = v.strip().strip('"')
+    realm = kv.get("realm")
+    service = kv.get("service")
+    scope = kv.get("scope")
+    return realm, service, dict(parse_qsl(scope)) if scope and "=" in scope else {"scope": scope}
+
+def _get_registry_token(registry, artifact_path, logger, username=None, password=None, session=None):
+    """Obtain a Bearer token for Docker Registry v2 using the server's authenticate challenge."""
+    s = session or requests.Session()
+    probe_url = f"{registry.rstrip('/')}/v2/{artifact_path}/tags/list"
+    r = s.get(probe_url, timeout=10)
+    if r.status_code != 401 or "WWW-Authenticate" not in r.headers:
+        # Some registries allow anonymous pulls; no token needed.
+        return None
+    realm, service, scope_map = _parse_bearer_challenge(r.headers["WWW-Authenticate"])
+    if not realm:
+        logger.debug("Bearer challenge missing realm; proceeding without token.")
+        return None
+
+    # Compose scope if not present. Standard scope format:
+    #   scope=repository:<name>:pull
+    scope = scope_map.get("scope")
+    if not scope:
+        scope = f"repository:{artifact_path}:pull"
+
+    params = {"service": service, "scope": scope}
+    auth = (username, password) if (username and password) else None
+    tr = s.get(realm, params=params, auth=auth, timeout=10)
+    tr.raise_for_status()
+    token = (tr.json() or {}).get("token") or (tr.json() or {}).get("access_token")
+    return token
+
 def fetch_msr(product_config):
-    """
-    Updated for Harbor OCI:
-      - MSR 4.x → registry.mirantis.com/harbor/helm/msr
-      - MSR 3.x → registry.mirantis.com/msr/helm/msr
-      - < 3     → legacy JSON endpoint unchanged
-    Returns a ChartMuseum-like index to keep parse_msr_releases unchanged.
-    """
+    """Fetch MSR release info (OCI or legacy), handling registry Bearer auth, and return parsed releases."""
     config = importlib.import_module('config')
     logger = config.logger
 
     logger.debug('fetch_msr called with configuration: %s', product_config)
 
-    repository = product_config.get('repository')
-    registry   = product_config.get('registry')
-    branch     = product_config.get('branch')
-    product    = product_config.get('product', 'msr')
+    repository = product_config.get('repository')              # 'harbor/helm' or 'msr/msr'
+    registry   = product_config.get('registry')                # 'https://registry.mirantis.com'
+    branch     = product_config.get('branch')                  # '4.0' or '3.1'
+    product    = product_config.get('product', 'msr')          # 'msr'
+    username   = product_config.get('username')                # optional
+    password   = product_config.get('password')                # optional
     branch_major = int(branch.split('.')[0]) if branch else None
 
     try:
         if branch_major and branch_major >= 3 and "registry.mirantis.com" in registry:
-            # Choose correct OCI artifact path per major line
-            if branch_major >= 4:
-                artifact_path = "harbor/helm/msr"
-            else:  # 3.x
-                artifact_path = "msr/helm/msr"
-
+            # Choose correct OCI artifact path per major line:
+            artifact_path = "harbor/helm/msr" if branch_major >= 4 else "msr/helm/msr"
             url = f"{registry.rstrip('/')}/v2/{artifact_path}/tags/list"
             logger.debug('Constructed URL (OCI tags): %s', url)
 
-            resp = requests.get(url, timeout=10)
+            s = requests.Session()
+            # Try with no auth first
+            resp = s.get(url, timeout=10)
+
+            if resp.status_code == 401:
+                # Perform Bearer token flow
+                token = _get_registry_token(registry, artifact_path, logger, username, password, session=s)
+                if token:
+                    resp = s.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=10)
+
             resp.raise_for_status()
             logger.debug('HTTP response status: %s', resp.status_code)
             logger.debug('HTTP response text: %s', resp.text)
 
             payload = resp.json()  # {"name":"...","tags":[...]}
             tags = _filter_branch(payload.get("tags") or [], branch)
-
-            # If you truly only want the latest, keep just the top version:
             tags = sorted(tags, key=_semver_key, reverse=True)
+
+            # Keep only the latest within the branch
             if tags:
-                tags = [tags[0]]   # <-- comment this line if you prefer all branch tags
+                tags = [tags[0]]
 
             synthetic_index = _build_chartmuseum_index_like(product, tags)
             return parse_msr_releases(synthetic_index, branch)
 
         else:
-            # Legacy (<3) unchanged behavior
+            # Legacy (<3) unchanged behavior — public JSON
             base_url = f"{registry.rstrip('/')}/v2/repositories/{(repository or '').strip('/')}"
             url = f"{base_url}/tags"
             logger.debug('Constructed URL (legacy tags): %s', url)
@@ -411,6 +453,7 @@ def fetch_msr(product_config):
     except ValueError as value_error:
         logger.error("Value error occurred: %s", value_error)
         return []
+
 
 def parse_msr_releases(data, branch):
     """
