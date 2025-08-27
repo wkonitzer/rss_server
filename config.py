@@ -63,13 +63,6 @@ PRODUCTS = [
     {
         'product': 'mcr',
         'repository': 'https://repos.mirantis.com',
-        'channel': 'stable',
-        'component': 'docker',
-        'fetch_function': fetch_mcr
-    },
-    {
-        'product': 'mcr',
-        'repository': 'https://repos.mirantis.com',
         'channel': 'stable-25.0',
         'component': 'docker',
         'fetch_function': fetch_mcr
@@ -100,13 +93,6 @@ PRODUCTS = [
         'fetch_function': fetch_mke
     },
     {
-        'product': 'mke',
-        'repository': 'mirantis/ucp',
-        'registry': 'https://hub.docker.com',
-        'branch': '3.6',
-        'fetch_function': fetch_mke
-    },
-    {
         'product': 'msr',
         'repository': 'harbor/helm',
         'registry': 'https://registry.mirantis.com',
@@ -118,13 +104,6 @@ PRODUCTS = [
         'repository': 'msr/msr',
         'registry': 'https://registry.mirantis.com',
         'branch': '3.1',
-        'fetch_function': fetch_msr
-    },
-    {
-        'product': 'msr',
-        'repository': 'msr/msr',
-        'registry': 'https://registry.mirantis.com',
-        'branch': '3.0',
         'fetch_function': fetch_msr
     },
     {
@@ -159,6 +138,16 @@ PRODUCTS = [
     {
         'product': 'lagoon',
         'url': 'https://github.com/uselagoon/lagoon/releases/latest',
+        'fetch_function': fetch_k0s
+    },
+    {
+        'product': 'k0smotron',
+        'url': 'https://github.com/k0sproject/k0smotron/releases/latest',
+        'fetch_function': fetch_k0s
+    },
+    {
+        'product': 'k0rdent',
+        'url': 'https://github.com/k0rdent/kcm/releases/latest',
         'fetch_function': fetch_k0s
     },
 ]
