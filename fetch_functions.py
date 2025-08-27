@@ -12,6 +12,7 @@ import yaml
 from bs4 import BeautifulSoup
 from packaging.version import Version
 from urllib.parse import parse_qsl
+from typing import Optional, Dict, List, Tuple
 
 SEMVER_BRANCH = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
 _BR_RE = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
